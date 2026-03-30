@@ -55,7 +55,10 @@ workflow-templates/build-debug-apk.yml
 .github/workflows/build-debug-apk.yml
 ```
 
-之后它会在 `push`、`pull_request` 和手动触发时编译 debug APK，并上传 artifact。
+之后它会做两类事:
+
+- 普通 `push`、`pull_request`、手动触发: 编译 debug APK，并上传 artifact
+- `v*` tag: 编译 debug APK，创建 GitHub Release，并把 APK 挂到 release assets
 
 在 GitHub 仓库里先加一个 Actions secret:
 
@@ -64,6 +67,15 @@ workflow-templates/build-debug-apk.yml
 内容就是完整的 `google-services.json` 文件文本。
 
 工作流会在构建前自动把这个 secret 写回 `app/google-services.json`。
+
+触发 release 的例子:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+推上去后，Actions 会自动创建同名 release，并上传 `ai-dca-android-notify-v0.1.0.apk`。
 
 说明:
 
