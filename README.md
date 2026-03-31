@@ -43,19 +43,13 @@ app/build/outputs/apk/debug/app-debug.apk
 
 ## GitHub Actions
 
-仓库内已经带了一个现成的 Actions 工作流模板:
-
-```text
-workflow-templates/build-debug-apk.yml
-```
-
-把它移动到:
+仓库内已经启用一个现成的 Actions 工作流:
 
 ```text
 .github/workflows/build-debug-apk.yml
 ```
 
-之后它会做两类事:
+它会做两类事:
 
 - 普通 `push`、`pull_request`、手动触发: 编译 debug APK，并上传 artifact
 - `v*` tag: 编译 debug APK，创建 GitHub Release，并把 APK 挂到 release assets
@@ -79,8 +73,8 @@ git push origin v0.1.0
 
 说明:
 
-- 我这边创建仓库用的现有 PAT 没有 `workflow` scope，所以 GitHub 不允许我直接把文件推到 `.github/workflows/`
-- 模板内容已经完整放进仓库；你在 GitHub Web 或本地移动到目标路径后就能直接用
+- 模板副本仍保留在 `workflow-templates/build-debug-apk.yml`
+- 实际生效的工作流文件在 `.github/workflows/build-debug-apk.yml`
 
 ## 行为说明
 
