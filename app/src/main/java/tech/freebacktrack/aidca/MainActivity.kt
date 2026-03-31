@@ -14,6 +14,9 @@ class MainActivity : Activity() {
   private lateinit var statusTitleTextView: TextView
   private lateinit var statusDetailTextView: TextView
   private lateinit var statusUpdatedAtTextView: TextView
+  private lateinit var pairingStatusTextView: TextView
+  private lateinit var pairingCodeTextView: TextView
+  private lateinit var pairingDetailTextView: TextView
   private lateinit var deviceNameTextView: TextView
   private lateinit var projectIdTextView: TextView
   private lateinit var packageNameTextView: TextView
@@ -54,6 +57,9 @@ class MainActivity : Activity() {
     statusTitleTextView = findViewById(R.id.statusTitleTextView)
     statusDetailTextView = findViewById(R.id.statusDetailTextView)
     statusUpdatedAtTextView = findViewById(R.id.statusUpdatedAtTextView)
+    pairingStatusTextView = findViewById(R.id.pairingStatusTextView)
+    pairingCodeTextView = findViewById(R.id.pairingCodeTextView)
+    pairingDetailTextView = findViewById(R.id.pairingDetailTextView)
     deviceNameTextView = findViewById(R.id.deviceNameTextView)
     projectIdTextView = findViewById(R.id.projectIdTextView)
     packageNameTextView = findViewById(R.id.packageNameTextView)
@@ -64,13 +70,13 @@ class MainActivity : Activity() {
 
   private fun startRegistration(trigger: String) {
     val identity = RegistrationRepository.currentIdentity(this)
+    val previousSnapshot = RegistrationStateStore.read(this, identity)
     renderSnapshot(
-      RegistrationSnapshot(
+      previousSnapshot.copy(
         state = "idle",
         title = "正在自动注册",
         detail = "正在向 Firebase 请求 token 并同步到 AI DCA 通知服务。",
         updatedAt = "",
-        tokenMasked = "",
         projectId = identity.projectId,
         packageName = identity.packageName,
         deviceName = identity.deviceName,
@@ -99,6 +105,26 @@ class MainActivity : Activity() {
     statusTitleTextView.text = snapshot.title
     statusDetailTextView.text = snapshot.detail
     statusUpdatedAtTextView.text = if (snapshot.updatedAt.isBlank()) "尚未完成自动注册" else "最近更新: ${snapshot.updatedAt}"
+    pairingStatusTextView.text = when (snapshot.pairingStatus) {
+      "issued" -> "前端配对码已生成"
+      "error" -> "前端配对码生成失败"
+      "paired" -> "当前设备已完成前端配对"
+      else -> "等待生成前端配对码"
+    }
+    pairingCodeTextView.text = if (snapshot.pairingCode.isBlank()) "--------" else snapshot.pairingCode
+    pairingDetailTextView.text = buildString {
+      append(
+        if (snapshot.pairingDetail.isBlank()) {
+          "设备完成注册后，会自动向 Worker 申请前端配对码。"
+        } else {
+          snapshot.pairingDetail
+        }
+      )
+      if (snapshot.registrationId.isNotBlank()) {
+        append("\nRegistration ID: ")
+        append(snapshot.registrationId)
+      }
+    }
     deviceNameTextView.text = snapshot.deviceName.ifBlank { "Android Device" }
     projectIdTextView.text = "Firebase Project: ${snapshot.projectId.ifBlank { "未读取到" }}"
     packageNameTextView.text = "包名: ${snapshot.packageName.ifBlank { "未读取到" }}"

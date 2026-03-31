@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="app_name">AI DCA Notify</string>
-  <string name="main_subtitle">安装后会自动申请 FCM token、自动注册到 AI DCA 通知服务。普通用户不需要手动填 token。</string>
-  <string name="main_note">如果看到“设备已注册”，说明 app 已经把当前设备提交到服务端。后续 token 轮换时，app 也会自动重注册。</string>
+  <string name="main_subtitle">安装后会自动申请 FCM token、自动注册到 AI DCA 通知服务，并向 Worker 申请前端配对码。</string>
+  <string name="main_note">如果看到 8 位前端配对码，说明 app 已经完成注册。把这个配对码填到前端 Android 页签，就能把当前设备绑定到那个浏览器。</string>
   <string name="status_label">当前状态</string>
   <string name="device_info_label">设备信息</string>
   <string name="status_idle">等待处理</string>

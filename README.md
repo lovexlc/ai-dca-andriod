@@ -9,8 +9,9 @@
 - 首次启动时自动获取 FCM registration token
 - 自动把设备注册到 `https://tools.freebacktrack.tech/api/notify/gcm/register`
 - 自动调用 `https://tools.freebacktrack.tech/api/notify/gcm/check` 做服务端连通性检查
+- 自动调用 `https://tools.freebacktrack.tech/api/notify/gcm/pairing-key` 生成前端配对码
 - 在 token 轮换时通过 `FirebaseMessagingService` 自动重注册
-- 在 app 内展示当前注册状态、失败原因、设备信息和 token 摘要
+- 在 app 内展示当前注册状态、失败原因、设备信息、token 摘要和前端配对码
 
 ## 本地构建
 
@@ -77,6 +78,14 @@ git push origin v0.1.0
 - 实际生效的工作流文件在 `.github/workflows/build-debug-apk.yml`
 
 ## 行为说明
+
+生成的前端配对码是一次性的短时验证码，不是长期 API key。流程是：
+
+1. Android app 自动注册设备并向 Worker 申请一个 8 位配对码
+2. 用户在 Web 前端的 Android 页签输入这个配对码
+3. Worker 把当前 Android 设备与那个浏览器的 `clientId` 保存成配对关系
+
+这样用户不需要手动复制 FCM token，也不需要在 app 里自己生成或保存 API key。
 
 - 普通用户只需要安装 app 并打开一次
 - 如果服务端还没配置 `FIREBASE_SERVICE_ACCOUNT_JSON`，app 仍然会先完成“设备注册”，但会在状态页明确显示“服务端连接检查失败”的原因
