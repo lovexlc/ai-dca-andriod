@@ -8,8 +8,10 @@
 - app 首次启动时自动获取 FCM registration token
 - app 自动把当前设备注册到 `https://tools.freebacktrack.tech/api/notify/gcm/register`
 - app 继续调用 `https://tools.freebacktrack.tech/api/notify/gcm/check` 做服务端连通性检查
+- app 自动调用 `https://tools.freebacktrack.tech/api/notify/gcm/pairing-key` 生成前端配对码
 - 当 Firebase token 轮换时，`FirebaseMessagingService` 会自动重新注册
 - app 会把最近一次真实收到的 FCM 消息记录到本地页面，方便区分“validateOnly 校验通过”和“手机真的收到了推送”
+- 调试模式下可以查看应用内日志，排查 HyperOS 后台限制和推送到达链路
 
 ## 你需要准备
 
@@ -42,6 +44,7 @@ app/build/outputs/apk/debug/app-debug.apk
 
 - 普通用户只需要安装 app 并打开一次
 - app 会自动展示当前注册状态、失败原因、设备信息和 token 摘要
+- app 会自动展示当前设备的 8 位前端配对码；把它填到前端 Android 页签，就能把设备绑定到那个浏览器
 - 页面里的“已校验”只表示服务端凭证、包名和 token 可以通过 FCM `validateOnly` 校验，不代表真实消息已经从 FCM 下发到手机
 - 如果服务端还没配置 `FIREBASE_SERVICE_ACCOUNT_JSON`，app 仍然会先完成“设备注册”，但会把“服务端连接检查失败”的原因显示出来
 - 当前仓库的服务端还没有把正式的 FCM 下发接入到交易提醒周期里；这个 app 先解决“自动注册”和“免手工 token”问题

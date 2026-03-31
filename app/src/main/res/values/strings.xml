@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="app_name">AI DCA Notify</string>
-  <string name="main_subtitle">安装后会自动申请 FCM token、自动注册到 AI DCA 通知服务。普通用户不需要手动填 token。</string>
-  <string name="main_note">“已校验”只表示 Firebase 凭证、包名和当前 token 能通过服务端的 validateOnly 检查。要确认 HyperOS 上的真实下发情况，请看“真实推送记录”。</string>
+  <string name="main_subtitle">安装后会自动申请 FCM token、自动注册到 AI DCA 通知服务，并向 Worker 申请前端配对码。</string>
+  <string name="main_note">如果看到 8 位前端配对码，说明 app 已经完成注册。把这个配对码填到前端 Android 页签，就能把当前设备绑定到那个浏览器。“已校验”仍只表示 validateOnly 通过；HyperOS 上请结合真实推送记录和调试日志判断实际到达情况。</string>
   <string name="status_label">当前状态</string>
   <string name="device_info_label">设备信息</string>
   <string name="delivery_label">真实推送记录</string>
+  <string name="pairing_label">前端配对</string>
   <string name="status_idle">等待处理</string>
   <string name="action_refresh">重新检查连接</string>
   <string name="permission_denied_message">系统通知权限未开启，后续即使服务端发送成功，系统也可能不展示通知。</string>

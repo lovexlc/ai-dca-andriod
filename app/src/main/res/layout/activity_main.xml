@@ -99,6 +99,54 @@
       <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:text="@string/pairing_label"
+        android:textColor="@color/slate_500"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+      <TextView
+        android:id="@+id/pairingStatusTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:textColor="@color/ink"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+      <TextView
+        android:id="@+id/pairingCodeTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/token_surface"
+        android:fontFamily="monospace"
+        android:padding="14dp"
+        android:textColor="@color/slate_700"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+      <TextView
+        android:id="@+id/pairingDetailTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:lineSpacingExtra="3dp"
+        android:textColor="@color/slate_600"
+        android:textSize="14sp" />
+    </LinearLayout>
+
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="16dp"
+      android:background="@drawable/card_surface"
+      android:elevation="1dp"
+      android:orientation="vertical"
+      android:padding="20dp">
+
+      <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:text="@string/device_info_label"
         android:textColor="@color/slate_500"
         android:textSize="12sp"

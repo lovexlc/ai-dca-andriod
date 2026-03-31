@@ -41,7 +41,7 @@ object RegistrationRepository {
     val appContext = context.applicationContext
     DebugLogStore.append(appContext, "register", "Refresh requested, trigger=$trigger")
     executor.execute {
-      val snapshot = registerCurrentToken(appContext, null, trigger)
+      val snapshot = safeRegisterCurrentToken(appContext, null, trigger)
       mainHandler.post {
         callback(snapshot)
       }
@@ -52,13 +52,39 @@ object RegistrationRepository {
     val appContext = context.applicationContext
     DebugLogStore.append(appContext, "register", "Sync requested from service, trigger=$trigger token=${maskToken(token)}")
     executor.execute {
-      registerCurrentToken(appContext, token, trigger)
+      safeRegisterCurrentToken(appContext, token, trigger)
+    }
+  }
+
+  private fun safeRegisterCurrentToken(
+    context: Context,
+    explicitToken: String?,
+    trigger: String
+  ): RegistrationSnapshot {
+    return try {
+      registerCurrentToken(context, explicitToken, trigger)
+    } catch (error: Exception) {
+      DebugLogStore.append(
+        context,
+        "register",
+        "Registration failed during $trigger: ${error.message ?: "未知错误"}"
+      )
+      val identity = currentIdentity(context)
+      errorSnapshot(
+        context = context,
+        identity = identity,
+        trigger = trigger,
+        title = "自动注册失败",
+        detail = describeUnexpectedFailure(error),
+        tokenMasked = maskToken(explicitToken.orEmpty())
+      )
     }
   }
 
   private fun registerCurrentToken(context: Context, explicitToken: String?, trigger: String): RegistrationSnapshot {
     val identity = currentIdentity(context)
     val firebaseApp = resolveFirebaseApp(context)
+    val previousSnapshot = RegistrationStateStore.read(context, identity)
     DebugLogStore.append(
       context,
       "register",
@@ -67,46 +93,41 @@ object RegistrationRepository {
 
     if (firebaseApp == null) {
       DebugLogStore.append(context, "register", "Firebase app missing, aborting registration")
-      val snapshot = RegistrationSnapshot(
-        state = "error",
+      return errorSnapshot(
+        context = context,
+        identity = identity,
+        trigger = trigger,
         title = "缺少 Firebase 配置",
-        detail = "应用还没有接入 Firebase。请把 google-services.json 放到 app/ 后重新构建安装。",
-        updatedAt = nowLabel(),
-        tokenMasked = "",
-        projectId = identity.projectId,
-        packageName = identity.packageName,
-        deviceName = identity.deviceName,
-        senderId = identity.senderId,
-        appId = identity.appId,
-        trigger = trigger
+        detail = "应用还没有接入 Firebase。请把 google-services.json 放到 app/ 后重新构建安装。"
       )
-      RegistrationStateStore.write(context, snapshot)
-      return snapshot
     }
 
-    val token = explicitToken?.trim().orEmpty().ifBlank {
-      fetchTokenBlocking(context)
+    val token = try {
+      explicitToken?.trim().orEmpty().ifBlank {
+        fetchTokenBlocking(context)
+      }
+    } catch (error: Exception) {
+      DebugLogStore.append(context, "firebase", "Token fetch failed during $trigger: ${error.message ?: "未知错误"}")
+      return errorSnapshot(
+        context = context,
+        identity = identity,
+        trigger = trigger,
+        title = "获取 FCM token 失败",
+        detail = describeTokenFetchFailure(error)
+      )
     }
 
     DebugLogStore.append(context, "register", "Using token ${maskToken(token)}")
 
     if (token.isBlank()) {
       DebugLogStore.append(context, "register", "Firebase returned empty token")
-      val snapshot = RegistrationSnapshot(
-        state = "error",
+      return errorSnapshot(
+        context = context,
+        identity = identity,
+        trigger = trigger,
         title = "获取 FCM token 失败",
-        detail = "Firebase 没有返回可用的 registration token，请稍后再试。",
-        updatedAt = nowLabel(),
-        tokenMasked = "",
-        projectId = identity.projectId,
-        packageName = identity.packageName,
-        deviceName = identity.deviceName,
-        senderId = identity.senderId,
-        appId = identity.appId,
-        trigger = trigger
+        detail = "Firebase 没有返回可用的 registration token，请稍后再试。"
       )
-      RegistrationStateStore.write(context, snapshot)
-      return snapshot
     }
 
     return try {
@@ -118,66 +139,85 @@ object RegistrationRepository {
         .put("senderId", identity.senderId)
         .put("appId", identity.appId)
         .put("token", token)
-      val registerResponse = postJson("${BuildConfig.NOTIFY_BASE_URL}/gcm/register", registerPayload)
-      val registeredCount = registerResponse.body.optJSONObject("setup")?.optInt("gcmRegistrationCount") ?: 0
-      DebugLogStore.append(context, "register", "Register API success, registrationCount=$registeredCount")
 
-      try {
+      if (previousSnapshot.registrationId.isNotBlank()) {
+        registerPayload.put("registrationId", previousSnapshot.registrationId)
+      }
+
+      val registerResponse = postJson("${BuildConfig.NOTIFY_BASE_URL}/gcm/register", registerPayload)
+      val registrationId = registerResponse.body
+        .optJSONObject("registration")
+        ?.optString("id")
+        .orEmpty()
+        .ifBlank { previousSnapshot.registrationId }
+      val registeredCount = registerResponse.body.optJSONObject("setup")?.optInt("gcmRegistrationCount") ?: 0
+      DebugLogStore.append(
+        context,
+        "register",
+        "Register API success, registrationCount=$registeredCount registrationId=${registrationId.ifBlank { "-" }}"
+      )
+
+      val connectionState = try {
         DebugLogStore.append(context, "register", "Running validateOnly check against ${BuildConfig.NOTIFY_BASE_URL}/gcm/check")
         val checkPayload = JSONObject()
           .put("projectId", identity.projectId)
           .put("packageName", identity.packageName)
           .put("token", token)
+
+        if (registrationId.isNotBlank()) {
+          checkPayload.put("registrationId", registrationId)
+        }
+
         val checkResponse = postJson("${BuildConfig.NOTIFY_BASE_URL}/gcm/check", checkPayload)
         val detail = checkResponse.body
           .optJSONObject("result")
           ?.optString("detail")
           .orEmpty()
           .ifBlank { "FCM 凭证和当前 Android token 已通过服务端检查。" }
-        val snapshot = RegistrationSnapshot(
+        DebugLogStore.append(context, "register", "ValidateOnly check passed")
+        ConnectionState(
           state = "validated",
           title = "FCM 凭证已校验",
-          detail = "$detail 这一步只说明 Firebase 服务账号、包名和当前 token 可以通过 FCM validateOnly 校验，不代表手机已经收到真实推送。",
-          updatedAt = nowLabel(),
-          tokenMasked = maskToken(token),
-          projectId = identity.projectId,
-          packageName = identity.packageName,
-          deviceName = identity.deviceName,
-          senderId = identity.senderId,
-          appId = identity.appId,
-          trigger = trigger
+          detail = "$detail 这一步只说明 Firebase 服务账号、包名和当前 token 可以通过 FCM validateOnly 校验，不代表手机已经收到真实推送。"
         )
-        DebugLogStore.append(context, "register", "ValidateOnly check passed")
-        RegistrationStateStore.write(context, snapshot)
-        snapshot
       } catch (checkError: Exception) {
         DebugLogStore.append(
           context,
           "register",
           "ValidateOnly check failed: ${checkError.message ?: "未知错误"}"
         )
-        val snapshot = RegistrationSnapshot(
+        ConnectionState(
           state = "registered",
           title = "设备已注册",
-          detail = "token 已提交到服务端（当前共登记 $registeredCount 台设备），但服务端连接检查失败: ${checkError.message ?: "未知错误"}",
-          updatedAt = nowLabel(),
-          tokenMasked = maskToken(token),
-          projectId = identity.projectId,
-          packageName = identity.packageName,
-          deviceName = identity.deviceName,
-          senderId = identity.senderId,
-          appId = identity.appId,
-          trigger = trigger
+          detail = "token 已提交到服务端（当前共登记 $registeredCount 台设备），但服务端连接检查失败: ${checkError.message ?: "未知错误"}"
         )
-        RegistrationStateStore.write(context, snapshot)
-        snapshot
       }
-    } catch (error: Exception) {
-      DebugLogStore.append(context, "register", "Registration failed: ${error.message ?: "未知错误"}")
+
+      val pairingState = try {
+        DebugLogStore.append(
+          context,
+          "pairing",
+          "Requesting pairing code for registrationId=${registrationId.ifBlank { "-" }}"
+        )
+        requestPairingCode(context, registrationId, token)
+      } catch (pairingError: Exception) {
+        DebugLogStore.append(
+          context,
+          "pairing",
+          "Pairing code request failed: ${pairingError.message ?: "未知错误"}"
+        )
+        PairingState(
+          code = "",
+          expiresAt = "",
+          status = "error",
+          detail = "配对码生成失败: ${pairingError.message ?: "未知错误"}"
+        )
+      }
+
       val snapshot = RegistrationSnapshot(
-        state = "error",
-        title = "自动注册失败",
-        detail = error.message ?: "注册通知设备时发生未知错误。",
+        state = connectionState.state,
+        title = connectionState.title,
+        detail = connectionState.detail,
         updatedAt = nowLabel(),
         tokenMasked = maskToken(token),
         projectId = identity.projectId,
@@ -185,10 +225,63 @@ object RegistrationRepository {
         deviceName = identity.deviceName,
         senderId = identity.senderId,
         appId = identity.appId,
-        trigger = trigger
+        trigger = trigger,
+        registrationId = registrationId,
+        pairingCode = pairingState.code,
+        pairingCodeExpiresAt = pairingState.expiresAt,
+        pairingStatus = pairingState.status,
+        pairingDetail = pairingState.detail
       )
       RegistrationStateStore.write(context, snapshot)
       snapshot
+    } catch (error: Exception) {
+      DebugLogStore.append(context, "register", "Registration failed: ${error.message ?: "未知错误"}")
+      errorSnapshot(
+        context = context,
+        identity = identity,
+        trigger = trigger,
+        title = "自动注册失败",
+        detail = error.message ?: "注册通知设备时发生未知错误。",
+        tokenMasked = maskToken(token)
+      )
+    }
+  }
+
+  private fun requestPairingCode(context: Context, registrationId: String, token: String): PairingState {
+    val payload = JSONObject()
+      .put("token", token)
+
+    if (registrationId.isNotBlank()) {
+      payload.put("registrationId", registrationId)
+    }
+
+    val response = postJson("${BuildConfig.NOTIFY_BASE_URL}/gcm/pairing-key", payload)
+    val pairingPayload = response.body.optJSONObject("pairing")
+    val code = pairingPayload?.optString("code").orEmpty()
+    val expiresAt = pairingPayload?.optString("expiresAt").orEmpty()
+
+    return if (code.isBlank()) {
+      DebugLogStore.append(context, "pairing", "Pairing key response had no code")
+      PairingState(
+        code = "",
+        expiresAt = expiresAt,
+        status = "unavailable",
+        detail = "服务端没有返回可用的前端配对码。"
+      )
+    } else {
+      DebugLogStore.append(context, "pairing", "Pairing code issued: $code expiresAt=${expiresAt.ifBlank { "-" }}")
+      PairingState(
+        code = code,
+        expiresAt = expiresAt,
+        status = "issued",
+        detail = buildString {
+          append("把这个 8 位配对码输入前端 Android 页签，Worker 会把当前设备绑定到那个浏览器。")
+          if (expiresAt.isNotBlank()) {
+            append(" 有效期至: ")
+            append(formatIsoLabel(expiresAt))
+          }
+        }
+      )
     }
   }
 
@@ -286,6 +379,84 @@ object RegistrationRepository {
     }
   }
 
+  private fun errorSnapshot(
+    context: Context,
+    identity: AppIdentity,
+    trigger: String,
+    title: String,
+    detail: String,
+    tokenMasked: String = ""
+  ): RegistrationSnapshot {
+    val previousSnapshot = RegistrationStateStore.read(context, identity)
+    val snapshot = RegistrationSnapshot(
+      state = "error",
+      title = title,
+      detail = detail,
+      updatedAt = nowLabel(),
+      tokenMasked = tokenMasked.ifBlank { previousSnapshot.tokenMasked },
+      projectId = identity.projectId,
+      packageName = identity.packageName,
+      deviceName = identity.deviceName,
+      senderId = identity.senderId,
+      appId = identity.appId,
+      trigger = trigger,
+      registrationId = previousSnapshot.registrationId,
+      pairingCode = previousSnapshot.pairingCode,
+      pairingCodeExpiresAt = previousSnapshot.pairingCodeExpiresAt,
+      pairingStatus = previousSnapshot.pairingStatus,
+      pairingDetail = previousSnapshot.pairingDetail
+    )
+    RegistrationStateStore.write(context, snapshot)
+    return snapshot
+  }
+
+  private fun describeTokenFetchFailure(error: Exception): String {
+    val errorSummary = errorChainSummary(error)
+    val hint = when {
+      errorSummary.contains("MISSING_INSTANCEID_SERVICE", ignoreCase = true) ->
+        "当前设备缺少可用的 Google Play 服务，FCM 无法签发 token。"
+      errorSummary.contains("SERVICE_NOT_AVAILABLE", ignoreCase = true) ->
+        "Firebase 当前不可达。请检查设备网络以及 Google Play 服务状态。"
+      errorSummary.contains("FIS_AUTH_ERROR", ignoreCase = true) ->
+        "Firebase Installations 鉴权失败。请确认 google-services.json 与当前应用包名一致。"
+      else -> ""
+    }
+
+    return buildString {
+      append("Firebase 没有返回可用的 registration token。")
+      if (errorSummary.isNotBlank()) {
+        append(" 原因: ")
+        append(errorSummary)
+        append("。")
+      }
+      if (hint.isNotBlank()) {
+        append(" ")
+        append(hint)
+      }
+    }
+  }
+
+  private fun describeUnexpectedFailure(error: Exception): String {
+    val errorSummary = errorChainSummary(error)
+    return if (errorSummary.isBlank()) {
+      "自动注册通知设备时发生未知错误。"
+    } else {
+      "自动注册通知设备时发生错误: $errorSummary。"
+    }
+  }
+
+  private fun errorChainSummary(error: Throwable): String {
+    return generateSequence(error) { it.cause }
+      .mapNotNull { cause ->
+        cause.message
+          ?.trim()
+          ?.takeIf { it.isNotEmpty() }
+          ?: cause.javaClass.simpleName.takeIf { it.isNotEmpty() }
+      }
+      .distinct()
+      .joinToString(" -> ")
+  }
+
   private fun buildDeviceName(): String {
     val manufacturer = Build.MANUFACTURER.orEmpty().trim()
     val model = Build.MODEL.orEmpty().trim()
@@ -304,8 +475,25 @@ object RegistrationRepository {
     return SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date())
   }
 
+  private fun formatIsoLabel(value: String): String {
+    return value.replace('T', ' ').replace("Z", "").take(19)
+  }
+
   private data class HttpResponse(
     val code: Int,
     val body: JSONObject
+  )
+
+  private data class ConnectionState(
+    val state: String,
+    val title: String,
+    val detail: String
+  )
+
+  private data class PairingState(
+    val code: String,
+    val expiresAt: String,
+    val status: String,
+    val detail: String
   )
 }

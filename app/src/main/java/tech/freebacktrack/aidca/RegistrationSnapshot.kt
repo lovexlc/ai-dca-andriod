@@ -11,7 +11,12 @@ data class RegistrationSnapshot(
   val deviceName: String,
   val senderId: String,
   val appId: String,
-  val trigger: String
+  val trigger: String,
+  val registrationId: String,
+  val pairingCode: String,
+  val pairingCodeExpiresAt: String,
+  val pairingStatus: String,
+  val pairingDetail: String
 ) {
   companion object {
     fun idle(identity: AppIdentity): RegistrationSnapshot {
@@ -26,7 +31,12 @@ data class RegistrationSnapshot(
         deviceName = identity.deviceName,
         senderId = identity.senderId,
         appId = identity.appId,
-        trigger = ""
+        trigger = "",
+        registrationId = "",
+        pairingCode = "",
+        pairingCodeExpiresAt = "",
+        pairingStatus = "",
+        pairingDetail = "设备完成注册后会自动向 Worker 申请前端配对码。"
       )
     }
   }
