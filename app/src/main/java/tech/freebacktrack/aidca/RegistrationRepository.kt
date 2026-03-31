@@ -150,13 +150,18 @@ object RegistrationRepository {
         ?.optString("id")
         .orEmpty()
         .ifBlank { previousSnapshot.registrationId }
+      val registeredPairCount = registerResponse.body
+        .optJSONObject("registration")
+        ?.optInt("pairedClientCount")
+        ?: 0
       val registeredCount = registerResponse.body.optJSONObject("setup")?.optInt("gcmRegistrationCount") ?: 0
       DebugLogStore.append(
         context,
         "register",
-        "Register API success, registrationCount=$registeredCount registrationId=${registrationId.ifBlank { "-" }}"
+        "Register API success, registrationCount=$registeredCount registrationId=${registrationId.ifBlank { "-" }} pairedClientCount=$registeredPairCount"
       )
 
+      var pairedClientCount = registeredPairCount
       val connectionState = try {
         DebugLogStore.append(context, "register", "Running validateOnly check against ${BuildConfig.NOTIFY_BASE_URL}/gcm/check")
         val checkPayload = JSONObject()
@@ -169,6 +174,10 @@ object RegistrationRepository {
         }
 
         val checkResponse = postJson("${BuildConfig.NOTIFY_BASE_URL}/gcm/check", checkPayload)
+        pairedClientCount = checkResponse.body
+          .optJSONObject("registration")
+          ?.optInt("pairedClientCount")
+          ?: pairedClientCount
         val detail = checkResponse.body
           .optJSONObject("result")
           ?.optString("detail")
@@ -193,25 +202,39 @@ object RegistrationRepository {
         )
       }
 
-      val pairingState = try {
+      val pairingState = if (pairedClientCount > 0) {
         DebugLogStore.append(
           context,
           "pairing",
-          "Requesting pairing code for registrationId=${registrationId.ifBlank { "-" }}"
-        )
-        requestPairingCode(context, registrationId, token)
-      } catch (pairingError: Exception) {
-        DebugLogStore.append(
-          context,
-          "pairing",
-          "Pairing code request failed: ${pairingError.message ?: "未知错误"}"
+          "Registration already paired, hide pairing card. pairedClientCount=$pairedClientCount"
         )
         PairingState(
           code = "",
           expiresAt = "",
-          status = "error",
-          detail = "配对码生成失败: ${pairingError.message ?: "未知错误"}"
+          status = "paired",
+          detail = "当前设备已绑定 $pairedClientCount 个前端，不再显示前端配对码。"
         )
+      } else {
+        try {
+          DebugLogStore.append(
+            context,
+            "pairing",
+            "Requesting pairing code for registrationId=${registrationId.ifBlank { "-" }}"
+          )
+          requestPairingCode(context, registrationId, token)
+        } catch (pairingError: Exception) {
+          DebugLogStore.append(
+            context,
+            "pairing",
+            "Pairing code request failed: ${pairingError.message ?: "未知错误"}"
+          )
+          PairingState(
+            code = "",
+            expiresAt = "",
+            status = "error",
+            detail = "配对码生成失败: ${pairingError.message ?: "未知错误"}"
+          )
+        }
       }
 
       val snapshot = RegistrationSnapshot(

@@ -19,6 +19,7 @@ class MainActivity : Activity() {
   private lateinit var statusTitleTextView: TextView
   private lateinit var statusDetailTextView: TextView
   private lateinit var statusUpdatedAtTextView: TextView
+  private lateinit var pairingCardView: LinearLayout
   private lateinit var pairingStatusTextView: TextView
   private lateinit var pairingCodeTextView: TextView
   private lateinit var pairingDetailTextView: TextView
@@ -86,6 +87,7 @@ class MainActivity : Activity() {
     statusTitleTextView = findViewById(R.id.statusTitleTextView)
     statusDetailTextView = findViewById(R.id.statusDetailTextView)
     statusUpdatedAtTextView = findViewById(R.id.statusUpdatedAtTextView)
+    pairingCardView = findViewById(R.id.pairingCardView)
     pairingStatusTextView = findViewById(R.id.pairingStatusTextView)
     pairingCodeTextView = findViewById(R.id.pairingCodeTextView)
     pairingDetailTextView = findViewById(R.id.pairingDetailTextView)
@@ -194,6 +196,7 @@ class MainActivity : Activity() {
     statusTitleTextView.text = snapshot.title
     statusDetailTextView.text = snapshot.detail
     statusUpdatedAtTextView.text = if (snapshot.updatedAt.isBlank()) "尚未完成自动注册" else "最近更新: ${snapshot.updatedAt}"
+    pairingCardView.visibility = if (snapshot.pairingStatus == "paired") View.GONE else View.VISIBLE
     pairingStatusTextView.text = when (snapshot.pairingStatus) {
       "issued" -> "前端配对码已生成"
       "error" -> "前端配对码生成失败"
