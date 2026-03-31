@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import com.google.firebase.FirebaseApp
 import com.google.firebase.messaging.FirebaseMessaging
 import org.json.JSONObject
@@ -21,6 +22,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
 object RegistrationRepository {
+  private const val TAG = "RegistrationRepository"
   private val executor = Executors.newSingleThreadExecutor()
   private val mainHandler = Handler(Looper.getMainLooper())
 
@@ -40,7 +42,7 @@ object RegistrationRepository {
   fun refresh(context: Context, trigger: String, callback: (RegistrationSnapshot) -> Unit) {
     val appContext = context.applicationContext
     executor.execute {
-      val snapshot = registerCurrentToken(appContext, null, trigger)
+      val snapshot = safeRegisterCurrentToken(appContext, null, trigger)
       mainHandler.post {
         callback(snapshot)
       }
@@ -50,7 +52,28 @@ object RegistrationRepository {
   fun syncFromService(context: Context, token: String, trigger: String) {
     val appContext = context.applicationContext
     executor.execute {
-      registerCurrentToken(appContext, token, trigger)
+      safeRegisterCurrentToken(appContext, token, trigger)
+    }
+  }
+
+  private fun safeRegisterCurrentToken(
+    context: Context,
+    explicitToken: String?,
+    trigger: String
+  ): RegistrationSnapshot {
+    return try {
+      registerCurrentToken(context, explicitToken, trigger)
+    } catch (error: Exception) {
+      Log.e(TAG, "Registration failed during $trigger", error)
+      val identity = currentIdentity(context)
+      errorSnapshot(
+        context = context,
+        identity = identity,
+        trigger = trigger,
+        title = "自动注册失败",
+        detail = describeUnexpectedFailure(error),
+        tokenMasked = maskToken(explicitToken.orEmpty())
+      )
     }
   }
 
@@ -59,43 +82,38 @@ object RegistrationRepository {
     val firebaseApp = resolveFirebaseApp(context)
 
     if (firebaseApp == null) {
-      val snapshot = RegistrationSnapshot(
-        state = "error",
+      return errorSnapshot(
+        context = context,
+        identity = identity,
+        trigger = trigger,
         title = "缺少 Firebase 配置",
-        detail = "应用还没有接入 Firebase。请把 google-services.json 放到 android-app/app/ 后重新构建安装。",
-        updatedAt = nowLabel(),
-        tokenMasked = "",
-        projectId = identity.projectId,
-        packageName = identity.packageName,
-        deviceName = identity.deviceName,
-        senderId = identity.senderId,
-        appId = identity.appId,
-        trigger = trigger
+        detail = "应用还没有接入 Firebase。请把 google-services.json 放到 app/ 后重新构建安装。"
       )
-      RegistrationStateStore.write(context, snapshot)
-      return snapshot
     }
 
-    val token = explicitToken?.trim().orEmpty().ifBlank {
-      fetchTokenBlocking()
+    val token = try {
+      explicitToken?.trim().orEmpty().ifBlank {
+        fetchTokenBlocking()
+      }
+    } catch (error: Exception) {
+      Log.e(TAG, "Failed to fetch FCM token during $trigger", error)
+      return errorSnapshot(
+        context = context,
+        identity = identity,
+        trigger = trigger,
+        title = "获取 FCM token 失败",
+        detail = describeTokenFetchFailure(error)
+      )
     }
 
     if (token.isBlank()) {
-      val snapshot = RegistrationSnapshot(
-        state = "error",
+      return errorSnapshot(
+        context = context,
+        identity = identity,
+        trigger = trigger,
         title = "获取 FCM token 失败",
-        detail = "Firebase 没有返回可用的 registration token，请稍后再试。",
-        updatedAt = nowLabel(),
-        tokenMasked = "",
-        projectId = identity.projectId,
-        packageName = identity.packageName,
-        deviceName = identity.deviceName,
-        senderId = identity.senderId,
-        appId = identity.appId,
-        trigger = trigger
+        detail = "Firebase 没有返回可用的 registration token，请稍后再试。"
       )
-      RegistrationStateStore.write(context, snapshot)
-      return snapshot
     }
 
     return try {
@@ -174,7 +192,7 @@ object RegistrationRepository {
   private fun fetchTokenBlocking(): String {
     val latch = CountDownLatch(1)
     val tokenRef = AtomicReference("")
-    val errorRef = AtomicReference<Exception?>(null)
+    val errorRef = AtomicReference<Throwable?>(null)
 
     FirebaseMessaging.getInstance().token
       .addOnSuccessListener { token ->
@@ -182,7 +200,7 @@ object RegistrationRepository {
         latch.countDown()
       }
       .addOnFailureListener { error ->
-        errorRef.set(Exception(error))
+        errorRef.set(error)
         latch.countDown()
       }
 
@@ -195,7 +213,7 @@ object RegistrationRepository {
     val capturedError = errorRef.get()
 
     if (capturedError != null) {
-      throw capturedError
+      throw capturedError.asException()
     }
 
     return tokenRef.get().orEmpty()
@@ -256,6 +274,82 @@ object RegistrationRepository {
         }
       }
     }
+  }
+
+  private fun errorSnapshot(
+    context: Context,
+    identity: AppIdentity,
+    trigger: String,
+    title: String,
+    detail: String,
+    tokenMasked: String = ""
+  ): RegistrationSnapshot {
+    val snapshot = RegistrationSnapshot(
+      state = "error",
+      title = title,
+      detail = detail,
+      updatedAt = nowLabel(),
+      tokenMasked = tokenMasked,
+      projectId = identity.projectId,
+      packageName = identity.packageName,
+      deviceName = identity.deviceName,
+      senderId = identity.senderId,
+      appId = identity.appId,
+      trigger = trigger
+    )
+    RegistrationStateStore.write(context, snapshot)
+    return snapshot
+  }
+
+  private fun describeTokenFetchFailure(error: Exception): String {
+    val errorSummary = errorChainSummary(error)
+    val hint = when {
+      errorSummary.contains("MISSING_INSTANCEID_SERVICE", ignoreCase = true) ->
+        "当前设备缺少可用的 Google Play 服务，FCM 无法签发 token。"
+      errorSummary.contains("SERVICE_NOT_AVAILABLE", ignoreCase = true) ->
+        "Firebase 当前不可达。请检查设备网络以及 Google Play 服务状态。"
+      errorSummary.contains("FIS_AUTH_ERROR", ignoreCase = true) ->
+        "Firebase Installations 鉴权失败。请确认 google-services.json 与当前应用包名一致。"
+      else -> ""
+    }
+
+    return buildString {
+      append("Firebase 没有返回可用的 registration token。")
+      if (errorSummary.isNotBlank()) {
+        append(" 原因: ")
+        append(errorSummary)
+        append("。")
+      }
+      if (hint.isNotBlank()) {
+        append(" ")
+        append(hint)
+      }
+    }
+  }
+
+  private fun describeUnexpectedFailure(error: Exception): String {
+    val errorSummary = errorChainSummary(error)
+    return if (errorSummary.isBlank()) {
+      "自动注册通知设备时发生未知错误。"
+    } else {
+      "自动注册通知设备时发生错误: $errorSummary。"
+    }
+  }
+
+  private fun errorChainSummary(error: Throwable): String {
+    return generateSequence(error) { it.cause }
+      .mapNotNull { cause ->
+        cause.message
+          ?.trim()
+          ?.takeIf { it.isNotEmpty() }
+          ?: cause.javaClass.simpleName.takeIf { it.isNotEmpty() }
+      }
+      .distinct()
+      .joinToString(" -> ")
+  }
+
+  private fun Throwable.asException(): Exception {
+    return this as? Exception ?: Exception(message ?: javaClass.simpleName, this)
   }
 
   private fun buildDeviceName(): String {
