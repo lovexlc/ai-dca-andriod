@@ -54,3 +54,7 @@ app/build/outputs/apk/debug/app-debug.apk
 - Firebase Android 设置: https://firebase.google.com/docs/android/setup
 - Firebase Cloud Messaging Android 客户端: https://firebase.google.com/docs/cloud-messaging/android/client
 - Android 13 通知权限: https://developer.android.com/develop/ui/views/notifications/notification-permission
+
+## 社区支持
+
+感谢 [LinuxDo](https://linux.do/) 各位佬的支持。欢迎加入 LinuxDo，这里有技术交流、AI 前沿资讯和实战经验分享。
