@@ -77,7 +77,63 @@ jobs:
           name: app-release-apk-${{ github.ref_name }}
           path: app/build/outputs/apk/release/app-release.apk
 
-      - name: Prepare Release APK Name
+      - name: Prepare Main Release Metadata
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
+          RELEASE_TAG="main-build-${GITHUB_RUN_NUMBER}"
+          RELEASE_TITLE="Main Build #${GITHUB_RUN_NUMBER}"
+          APK_NAME="ai-dca-android-notify-main-${GITHUB_RUN_NUMBER}-${SHORT_SHA}.apk"
+          NOTES_FILE="release-notes-main-${GITHUB_RUN_NUMBER}.md"
+
+          if [ "${HAS_ANDROID_SIGNING}" = "true" ] && [ -f app/build/outputs/apk/release/app-release.apk ]; then
+            cp app/build/outputs/apk/release/app-release.apk "${APK_NAME}"
+          else
+            cp app/build/outputs/apk/debug/app-debug.apk "${APK_NAME}"
+          fi
+
+          {
+            echo "自动构建自 \`main\` 分支推送。"
+            echo
+            echo "- Commit: \`${GITHUB_SHA}\`"
+            echo "- Workflow Run: #${GITHUB_RUN_NUMBER}"
+            echo
+            echo "## Changelog"
+          } > "${NOTES_FILE}"
+
+          if [ -n "${BEFORE_SHA}" ] && [ "${BEFORE_SHA}" != "0000000000000000000000000000000000000000" ]; then
+            git log --no-merges --pretty=format:'- `%h` %s' "${BEFORE_SHA}..${GITHUB_SHA}" >> "${NOTES_FILE}"
+          else
+            git log -1 --pretty=format:'- `%h` %s' "${GITHUB_SHA}" >> "${NOTES_FILE}"
+          fi
+
+          {
+            echo "RELEASE_TAG=${RELEASE_TAG}"
+            echo "RELEASE_TITLE=${RELEASE_TITLE}"
+            echo "RELEASE_APK_NAME=${APK_NAME}"
+            echo "RELEASE_NOTES_FILE=${NOTES_FILE}"
+          } >> "${GITHUB_ENV}"
+
+      - name: Create Or Update Main Release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
+            gh release upload "${RELEASE_TAG}" "${RELEASE_APK_NAME}" --clobber
+            gh release edit "${RELEASE_TAG}" \
+              --title "${RELEASE_TITLE}" \
+              --notes-file "${RELEASE_NOTES_FILE}"
+          else
+            gh release create "${RELEASE_TAG}" "${RELEASE_APK_NAME}" \
+              --target "${GITHUB_SHA}" \
+              --title "${RELEASE_TITLE}" \
+              --notes-file "${RELEASE_NOTES_FILE}"
+          fi
+
+      - name: Prepare Tag Release APK Name
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
           if [ "${HAS_ANDROID_SIGNING}" = "true" ] && [ -f app/build/outputs/apk/release/app-release.apk ]; then
