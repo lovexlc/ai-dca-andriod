@@ -40,9 +40,52 @@ app/google-services.json
 app/build/outputs/apk/debug/app-debug.apk
 ```
 
+如果要生成可覆盖安装的固定签名 APK:
+
+1. 把 `release.jks` 放在仓库根目录
+2. 在仓库根目录新建 `keystore.properties`
+3. 填入以下字段
+
+```properties
+storeFile=release.jks
+storePassword=你的 keystore 密码
+keyAlias=你的 alias
+keyPassword=你的 key 密码
+```
+
+然后执行:
+
+```bash
+./gradlew assembleRelease
+```
+
+签名后的 release APK 通常在:
+
+```text
+app/build/outputs/apk/release/app-release.apk
+```
+
+如果要使用 GitHub Actions 生成固定签名 release APK，需要在仓库 Secrets 里配置:
+
+```text
+GOOGLE_SERVICES_JSON
+ANDROID_KEYSTORE_BASE64
+ANDROID_KEYSTORE_PASSWORD
+ANDROID_KEY_ALIAS
+ANDROID_KEY_PASSWORD
+```
+
+其中 `ANDROID_KEYSTORE_BASE64` 可以这样生成:
+
+```bash
+base64 -w 0 release.jks
+```
+
 ## 行为说明
 
 - 普通用户只需要安装 app 并打开一次
+- 想要覆盖更新，必须保持相同包名、相同签名，并且新包的 `versionCode` 不能低于已安装版本
+- GitHub Actions 构建时会自动使用 `github.run_number` 作为 `versionCode`，便于后续覆盖更新
 - app 会自动展示当前注册状态、失败原因、设备信息和 token 摘要
 - app 会自动展示当前设备的 8 位前端配对码；把它填到前端 Android 页签，就能把设备绑定到那个浏览器
 - 页面里的“已校验”只表示服务端凭证、包名和 token 可以通过 FCM `validateOnly` 校验，不代表真实消息已经从 FCM 下发到手机
