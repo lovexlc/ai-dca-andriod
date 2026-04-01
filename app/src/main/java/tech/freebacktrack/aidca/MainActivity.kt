@@ -4,9 +4,12 @@ import android.Manifest
 import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
@@ -27,8 +30,11 @@ class MainActivity : Activity() {
   private lateinit var projectIdTextView: TextView
   private lateinit var packageNameTextView: TextView
   private lateinit var senderIdTextView: TextView
+  private lateinit var deviceInstallationIdTextView: TextView
+  private lateinit var copyDeviceInstallationIdButton: Button
   private lateinit var tokenTextView: TextView
   private lateinit var deliveryStatusTextView: TextView
+  private lateinit var messageHistoryContainer: LinearLayout
   private lateinit var debugCardView: LinearLayout
   private lateinit var debugLogTextView: TextView
   private lateinit var copyDebugLogsButton: Button
@@ -42,12 +48,14 @@ class MainActivity : Activity() {
     setContentView(R.layout.activity_main)
     bindViews()
     setupDebugToggle()
+    setupDeviceIdentityActions()
     setupDebugActions()
     DebugLogStore.append(applicationContext, "ui", "MainActivity onCreate")
 
     val identity = RegistrationRepository.currentIdentity(this)
     renderSnapshot(RegistrationStateStore.read(this, identity))
     renderDeliveryReceipt()
+    renderMessageHistory()
     renderDebugPanel()
     requestNotificationPermissionIfNeeded()
 
@@ -78,6 +86,7 @@ class MainActivity : Activity() {
   override fun onResume() {
     super.onResume()
     renderDeliveryReceipt()
+    renderMessageHistory()
     renderDebugPanel()
   }
 
@@ -95,13 +104,25 @@ class MainActivity : Activity() {
     projectIdTextView = findViewById(R.id.projectIdTextView)
     packageNameTextView = findViewById(R.id.packageNameTextView)
     senderIdTextView = findViewById(R.id.senderIdTextView)
+    deviceInstallationIdTextView = findViewById(R.id.deviceInstallationIdTextView)
+    copyDeviceInstallationIdButton = findViewById(R.id.copyDeviceInstallationIdButton)
     tokenTextView = findViewById(R.id.tokenTextView)
     deliveryStatusTextView = findViewById(R.id.deliveryStatusTextView)
+    messageHistoryContainer = findViewById(R.id.messageHistoryContainer)
     debugCardView = findViewById(R.id.debugCardView)
     debugLogTextView = findViewById(R.id.debugLogTextView)
     copyDebugLogsButton = findViewById(R.id.copyDebugLogsButton)
     clearDebugLogsButton = findViewById(R.id.clearDebugLogsButton)
     refreshButton = findViewById(R.id.refreshButton)
+  }
+
+  private fun setupDeviceIdentityActions() {
+    copyDeviceInstallationIdButton.setOnClickListener {
+      val deviceInstallationId = DeviceInstallationStore.getOrCreate(applicationContext)
+      val clipboardManager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+      clipboardManager.setPrimaryClip(ClipData.newPlainText("AI DCA Device Installation ID", deviceInstallationId))
+      Toast.makeText(this, R.string.device_installation_id_copied, Toast.LENGTH_SHORT).show()
+    }
   }
 
   private fun setupDebugToggle() {
@@ -165,6 +186,7 @@ class MainActivity : Activity() {
         title = "正在自动注册",
         detail = "正在向 Firebase 请求 token，并同步到 AI DCA 通知服务和 Worker 配对码。",
         updatedAt = "",
+        deviceInstallationId = identity.deviceInstallationId,
         projectId = identity.projectId,
         packageName = identity.packageName,
         deviceName = identity.deviceName,
@@ -177,6 +199,7 @@ class MainActivity : Activity() {
     RegistrationRepository.refresh(this, trigger) { snapshot ->
       renderSnapshot(snapshot)
       renderDeliveryReceipt()
+      renderMessageHistory()
       DebugLogStore.append(applicationContext, "ui", "Registration finished with state=${snapshot.state}")
       renderDebugPanel()
     }
@@ -222,6 +245,7 @@ class MainActivity : Activity() {
     projectIdTextView.text = "Firebase Project: ${snapshot.projectId.ifBlank { "未读取到" }}"
     packageNameTextView.text = "包名: ${snapshot.packageName.ifBlank { "未读取到" }}"
     senderIdTextView.text = "Sender ID: ${snapshot.senderId.ifBlank { "未读取到" }}"
+    deviceInstallationIdTextView.text = snapshot.deviceInstallationId.ifBlank { DeviceInstallationStore.getOrCreate(applicationContext) }
     tokenTextView.text = if (snapshot.tokenMasked.isBlank()) "FCM token 尚未可用" else "Token: ${snapshot.tokenMasked}"
   }
 
@@ -262,6 +286,106 @@ class MainActivity : Activity() {
     }
   }
 
+  private fun renderMessageHistory() {
+    val records = prioritizeMessages(NotificationMessageStore.readAll(this))
+    messageHistoryContainer.removeAllViews()
+
+    if (records.isEmpty()) {
+      val emptyView = TextView(this).apply {
+        text = getString(R.string.message_history_empty)
+        setTextColor(getColor(R.color.slate_500))
+        textSize = 13f
+        setLineSpacing(0f, 1.2f)
+      }
+      messageHistoryContainer.addView(emptyView)
+      return
+    }
+
+    for (record in records.take(MAX_MESSAGE_RECORDS)) {
+      val itemView = LayoutInflater.from(this).inflate(R.layout.item_message_record, messageHistoryContainer, false)
+      val titleView = itemView.findViewById<TextView>(R.id.messageTitleTextView)
+      val metaView = itemView.findViewById<TextView>(R.id.messageMetaTextView)
+      val bodyView = itemView.findViewById<TextView>(R.id.messageBodyTextView)
+      val detailView = itemView.findViewById<TextView>(R.id.messageDetailTextView)
+      val openDetailButton = itemView.findViewById<Button>(R.id.openMessageDetailButton)
+
+      titleView.text = record.title.ifBlank { getString(R.string.incoming_message_fallback_title) }
+      metaView.text = buildString {
+        append(record.receivedAt.ifBlank { "--" })
+        if (record.strategyName.isNotBlank()) {
+          append(" · ")
+          append(record.strategyName)
+        }
+        if (record.symbol.isNotBlank()) {
+          append(" · ")
+          append(record.symbol)
+        }
+      }
+      bodyView.text = record.body.ifBlank { "这条推送没有正文内容。" }
+      detailView.text = buildString {
+        if (record.triggerCondition.isNotBlank()) {
+          append("触发条件: ")
+          append(record.triggerCondition)
+        }
+        if (record.purchaseAmount.isNotBlank()) {
+          if (isNotEmpty()) append('\n')
+          append("购买金额: ")
+          append(record.purchaseAmount)
+        }
+        if (record.messageId.isNotBlank()) {
+          if (isNotEmpty()) append('\n')
+          append("FCM Message ID: ")
+          append(record.messageId)
+        }
+        when (record.notificationStatus) {
+          "display-error" -> {
+            if (isNotEmpty()) append('\n')
+            append("通知展示失败: ")
+            append(record.notificationError.ifBlank { "未知错误" })
+          }
+          "displayed" -> {
+            if (isNotEmpty()) append('\n')
+            append("通知栏已展示。")
+          }
+        }
+        if (record.detailUrl.isNotBlank()) {
+          if (isNotEmpty()) append('\n')
+          append("更详细的策略说明请到网站查看。")
+        }
+      }
+
+      if (record.detailUrl.isBlank()) {
+        openDetailButton.visibility = View.GONE
+      } else {
+        openDetailButton.visibility = View.VISIBLE
+        openDetailButton.setOnClickListener {
+          startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(record.detailUrl)))
+        }
+      }
+
+      messageHistoryContainer.addView(itemView)
+    }
+  }
+
+  private fun prioritizeMessages(records: List<NotificationMessageRecord>): List<NotificationMessageRecord> {
+    val targetEventId = intent.getStringExtra(EXTRA_EVENT_ID).orEmpty()
+    val targetMessageId = intent.getStringExtra(EXTRA_MESSAGE_ID).orEmpty()
+
+    if (targetEventId.isBlank() && targetMessageId.isBlank()) {
+      return records
+    }
+
+    val highlighted = records.filter { record ->
+      (targetEventId.isNotBlank() && record.eventId == targetEventId)
+        || (targetMessageId.isNotBlank() && record.messageId == targetMessageId)
+    }
+    val remaining = records.filterNot { record ->
+      highlighted.any { highlightedRecord -> highlightedRecord.localId == record.localId }
+    }
+
+    return highlighted + remaining
+  }
+
   private fun renderDebugPanel() {
     val enabled = DebugLogStore.isEnabled(this)
     debugCardView.visibility = if (enabled) View.VISIBLE else View.GONE
@@ -295,8 +419,11 @@ class MainActivity : Activity() {
   )
 
   companion object {
+    const val EXTRA_EVENT_ID = "extra_event_id"
+    const val EXTRA_MESSAGE_ID = "extra_message_id"
     private const val REQUEST_NOTIFICATIONS = 1001
     private const val DEBUG_TAP_TARGET = 7
     private const val DEBUG_TAP_WINDOW_MS = 1800L
+    private const val MAX_MESSAGE_RECORDS = 12
   }
 }

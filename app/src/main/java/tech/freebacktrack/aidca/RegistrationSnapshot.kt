@@ -5,6 +5,7 @@ data class RegistrationSnapshot(
   val title: String,
   val detail: String,
   val updatedAt: String,
+  val deviceInstallationId: String,
   val tokenMasked: String,
   val projectId: String,
   val packageName: String,
@@ -25,6 +26,7 @@ data class RegistrationSnapshot(
         title = "等待自动注册",
         detail = "应用会在启动后自动拉取 FCM token 并注册到 AI DCA 通知服务。",
         updatedAt = "",
+        deviceInstallationId = identity.deviceInstallationId,
         tokenMasked = "",
         projectId = identity.projectId,
         packageName = identity.packageName,
@@ -43,6 +45,7 @@ data class RegistrationSnapshot(
 }
 
 data class AppIdentity(
+  val deviceInstallationId: String,
   val projectId: String,
   val packageName: String,
   val deviceName: String,

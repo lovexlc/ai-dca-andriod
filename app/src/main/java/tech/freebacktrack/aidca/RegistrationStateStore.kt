@@ -18,6 +18,7 @@ object RegistrationStateStore {
         title = payload.optString("title"),
         detail = payload.optString("detail"),
         updatedAt = payload.optString("updatedAt"),
+        deviceInstallationId = payload.optString("deviceInstallationId", fallbackIdentity.deviceInstallationId),
         tokenMasked = payload.optString("tokenMasked"),
         projectId = payload.optString("projectId", fallbackIdentity.projectId),
         packageName = payload.optString("packageName", fallbackIdentity.packageName),
@@ -42,6 +43,7 @@ object RegistrationStateStore {
       .put("title", snapshot.title)
       .put("detail", snapshot.detail)
       .put("updatedAt", snapshot.updatedAt)
+      .put("deviceInstallationId", snapshot.deviceInstallationId)
       .put("tokenMasked", snapshot.tokenMasked)
       .put("projectId", snapshot.projectId)
       .put("packageName", snapshot.packageName)

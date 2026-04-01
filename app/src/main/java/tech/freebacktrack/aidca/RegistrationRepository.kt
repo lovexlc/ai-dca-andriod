@@ -29,6 +29,7 @@ object RegistrationRepository {
     val options = firebaseApp?.options
 
     return AppIdentity(
+      deviceInstallationId = DeviceInstallationStore.getOrCreate(context),
       projectId = options?.projectId.orEmpty(),
       packageName = context.packageName.orEmpty(),
       deviceName = buildDeviceName(),
@@ -133,6 +134,7 @@ object RegistrationRepository {
     return try {
       DebugLogStore.append(context, "register", "Submitting token to ${BuildConfig.NOTIFY_BASE_URL}/gcm/register")
       val registerPayload = JSONObject()
+        .put("deviceInstallationId", identity.deviceInstallationId)
         .put("projectId", identity.projectId)
         .put("packageName", identity.packageName)
         .put("deviceName", identity.deviceName)
@@ -165,6 +167,7 @@ object RegistrationRepository {
       val connectionState = try {
         DebugLogStore.append(context, "register", "Running validateOnly check against ${BuildConfig.NOTIFY_BASE_URL}/gcm/check")
         val checkPayload = JSONObject()
+          .put("deviceInstallationId", identity.deviceInstallationId)
           .put("projectId", identity.projectId)
           .put("packageName", identity.packageName)
           .put("token", token)
@@ -221,7 +224,7 @@ object RegistrationRepository {
             "pairing",
             "Requesting pairing code for registrationId=${registrationId.ifBlank { "-" }}"
           )
-          requestPairingCode(context, registrationId, token)
+          requestPairingCode(context, identity, registrationId, token)
         } catch (pairingError: Exception) {
           DebugLogStore.append(
             context,
@@ -242,6 +245,7 @@ object RegistrationRepository {
         title = connectionState.title,
         detail = connectionState.detail,
         updatedAt = nowLabel(),
+        deviceInstallationId = identity.deviceInstallationId,
         tokenMasked = maskToken(token),
         projectId = identity.projectId,
         packageName = identity.packageName,
@@ -270,8 +274,14 @@ object RegistrationRepository {
     }
   }
 
-  private fun requestPairingCode(context: Context, registrationId: String, token: String): PairingState {
+  private fun requestPairingCode(
+    context: Context,
+    identity: AppIdentity,
+    registrationId: String,
+    token: String
+  ): PairingState {
     val payload = JSONObject()
+      .put("deviceInstallationId", identity.deviceInstallationId)
       .put("token", token)
 
     if (registrationId.isNotBlank()) {
@@ -416,6 +426,7 @@ object RegistrationRepository {
       title = title,
       detail = detail,
       updatedAt = nowLabel(),
+      deviceInstallationId = identity.deviceInstallationId,
       tokenMasked = tokenMasked.ifBlank { previousSnapshot.tokenMasked },
       projectId = identity.projectId,
       packageName = identity.packageName,

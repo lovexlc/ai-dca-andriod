@@ -5,8 +5,13 @@
   <string name="main_note">如果看到 8 位前端配对码，说明 app 已经完成注册。把这个配对码填到前端 Android 页签，就能把当前设备绑定到那个浏览器。“已校验”仍只表示 validateOnly 通过；HyperOS 上请结合真实推送记录和调试日志判断实际到达情况。</string>
   <string name="status_label">当前状态</string>
   <string name="device_info_label">设备信息</string>
-  <string name="delivery_label">真实推送记录</string>
+  <string name="delivery_label">消息记录</string>
   <string name="pairing_label">前端配对</string>
+  <string name="device_installation_id_label">设备唯一 ID</string>
+  <string name="action_copy_device_id">复制设备 ID</string>
+  <string name="device_installation_id_copied">设备唯一 ID 已复制</string>
+  <string name="message_history_empty">目前还没有收到任何结构化消息。真实推送到达后，这里会保留最近的提醒记录。</string>
+  <string name="message_action_open_detail">去网站看详情</string>
   <string name="status_idle">等待处理</string>
   <string name="action_refresh">重新检查连接</string>
   <string name="permission_denied_message">系统通知权限未开启，后续即使服务端发送成功，系统也可能不展示通知。</string>
