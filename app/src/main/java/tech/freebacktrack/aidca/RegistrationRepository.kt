@@ -42,7 +42,7 @@ object RegistrationRepository {
     val appContext = context.applicationContext
     DebugLogStore.append(appContext, "register", "Refresh requested, trigger=$trigger")
     executor.execute {
-      val snapshot = safeRegisterCurrentToken(appContext, null, trigger)
+      val snapshot = runHeartbeat(appContext, trigger)
       mainHandler.post {
         callback(snapshot)
       }
@@ -55,6 +55,10 @@ object RegistrationRepository {
     executor.execute {
       safeRegisterCurrentToken(appContext, token, trigger)
     }
+  }
+
+  fun runHeartbeat(context: Context, trigger: String = "heartbeat"): RegistrationSnapshot {
+    return safeRegisterCurrentToken(context.applicationContext, null, trigger)
   }
 
   private fun safeRegisterCurrentToken(
@@ -185,12 +189,12 @@ object RegistrationRepository {
           .optJSONObject("result")
           ?.optString("detail")
           .orEmpty()
-          .ifBlank { "FCM 凭证和当前 Android token 已通过服务端检查。" }
+          .ifBlank { "服务端检查通过" }
         DebugLogStore.append(context, "register", "ValidateOnly check passed")
         ConnectionState(
           state = "validated",
-          title = "FCM 凭证已校验",
-          detail = "$detail 这一步只说明 Firebase 服务账号、包名和当前 token 可以通过 FCM validateOnly 校验，不代表手机已经收到真实推送。"
+          title = "服务端已连通",
+          detail = detail
         )
       } catch (checkError: Exception) {
         DebugLogStore.append(
@@ -201,7 +205,7 @@ object RegistrationRepository {
         ConnectionState(
           state = "registered",
           title = "设备已注册",
-          detail = "token 已提交到服务端（当前共登记 $registeredCount 台设备），但服务端连接检查失败: ${checkError.message ?: "未知错误"}"
+          detail = "服务端检查失败: ${checkError.message ?: "未知错误"}"
         )
       }
 
@@ -215,7 +219,7 @@ object RegistrationRepository {
           code = "",
           expiresAt = "",
           status = "paired",
-          detail = "当前设备已绑定 $pairedClientCount 个前端，不再显示前端配对码。"
+          detail = ""
         )
       } else {
         try {
@@ -235,7 +239,7 @@ object RegistrationRepository {
             code = "",
             expiresAt = "",
             status = "error",
-            detail = "配对码生成失败: ${pairingError.message ?: "未知错误"}"
+            detail = pairingError.message ?: "配对码生成失败"
           )
         }
       }
@@ -299,7 +303,7 @@ object RegistrationRepository {
         code = "",
         expiresAt = expiresAt,
         status = "unavailable",
-        detail = "服务端没有返回可用的前端配对码。"
+        detail = ""
       )
     } else {
       DebugLogStore.append(context, "pairing", "Pairing code issued: $code expiresAt=${expiresAt.ifBlank { "-" }}")
@@ -307,13 +311,7 @@ object RegistrationRepository {
         code = code,
         expiresAt = expiresAt,
         status = "issued",
-        detail = buildString {
-          append("把这个 8 位配对码输入前端 Android 页签，Worker 会把当前设备绑定到那个浏览器。")
-          if (expiresAt.isNotBlank()) {
-            append(" 有效期至: ")
-            append(formatIsoLabel(expiresAt))
-          }
-        }
+        detail = if (expiresAt.isBlank()) "" else "有效期至 ${formatIsoLabel(expiresAt)}"
       )
     }
   }

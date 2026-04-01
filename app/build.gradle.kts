@@ -43,6 +43,7 @@ android {
 }
 
 dependencies {
+  implementation("androidx.work:work-runtime-ktx:2.10.2")
   implementation(platform("com.google.firebase:firebase-bom:34.7.0"))
   implementation("com.google.firebase:firebase-messaging")
 }

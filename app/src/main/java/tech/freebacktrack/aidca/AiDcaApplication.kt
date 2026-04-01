@@ -15,5 +15,6 @@ class AiDcaApplication : Application() {
     )
     NotifyMessagingService.ensureNotificationChannel(this)
     DebugLogStore.append(this, "app", "Notification channel ensured")
+    HeartbeatScheduler.ensureScheduled(this)
   }
 }

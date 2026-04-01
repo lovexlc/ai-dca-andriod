@@ -24,7 +24,7 @@ data class RegistrationSnapshot(
       return RegistrationSnapshot(
         state = "idle",
         title = "等待自动注册",
-        detail = "应用会在启动后自动拉取 FCM token 并注册到 AI DCA 通知服务。",
+        detail = "",
         updatedAt = "",
         deviceInstallationId = identity.deviceInstallationId,
         tokenMasked = "",
@@ -38,7 +38,7 @@ data class RegistrationSnapshot(
         pairingCode = "",
         pairingCodeExpiresAt = "",
         pairingStatus = "",
-        pairingDetail = "设备完成注册后会自动向 Worker 申请前端配对码。"
+        pairingDetail = ""
       )
     }
   }

@@ -39,7 +39,6 @@ class MainActivity : Activity() {
   private lateinit var debugLogTextView: TextView
   private lateinit var copyDebugLogsButton: Button
   private lateinit var clearDebugLogsButton: Button
-  private lateinit var refreshButton: Button
   private var titleTapCount = 0
   private var lastTitleTapAtMs = 0L
 
@@ -58,10 +57,6 @@ class MainActivity : Activity() {
     renderMessageHistory()
     renderDebugPanel()
     requestNotificationPermissionIfNeeded()
-
-    refreshButton.setOnClickListener {
-      startRegistration("manual-refresh")
-    }
 
     startRegistration("app-launch")
   }
@@ -113,7 +108,6 @@ class MainActivity : Activity() {
     debugLogTextView = findViewById(R.id.debugLogTextView)
     copyDebugLogsButton = findViewById(R.id.copyDebugLogsButton)
     clearDebugLogsButton = findViewById(R.id.clearDebugLogsButton)
-    refreshButton = findViewById(R.id.refreshButton)
   }
 
   private fun setupDeviceIdentityActions() {
@@ -184,7 +178,7 @@ class MainActivity : Activity() {
       previousSnapshot.copy(
         state = "idle",
         title = "正在自动注册",
-        detail = "正在向 Firebase 请求 token，并同步到 AI DCA 通知服务和 Worker 配对码。",
+        detail = "",
         updatedAt = "",
         deviceInstallationId = identity.deviceInstallationId,
         projectId = identity.projectId,
@@ -218,6 +212,7 @@ class MainActivity : Activity() {
     statusBadgeTextView.setTextColor(getColor(badge.textColorRes))
     statusTitleTextView.text = snapshot.title
     statusDetailTextView.text = snapshot.detail
+    statusDetailTextView.visibility = if (snapshot.detail.isBlank()) View.GONE else View.VISIBLE
     statusUpdatedAtTextView.text = if (snapshot.updatedAt.isBlank()) "尚未完成自动注册" else "最近更新: ${snapshot.updatedAt}"
     pairingCardView.visibility = if (snapshot.pairingStatus == "paired") View.GONE else View.VISIBLE
     pairingStatusTextView.text = when (snapshot.pairingStatus) {
@@ -228,19 +223,8 @@ class MainActivity : Activity() {
       else -> "等待生成前端配对码"
     }
     pairingCodeTextView.text = if (snapshot.pairingCode.isBlank()) "--------" else snapshot.pairingCode
-    pairingDetailTextView.text = buildString {
-      append(
-        if (snapshot.pairingDetail.isBlank()) {
-          "设备完成注册后，会自动向 Worker 申请前端配对码。"
-        } else {
-          snapshot.pairingDetail
-        }
-      )
-      if (snapshot.registrationId.isNotBlank()) {
-        append("\nRegistration ID: ")
-        append(snapshot.registrationId)
-      }
-    }
+    pairingDetailTextView.text = snapshot.pairingDetail
+    pairingDetailTextView.visibility = if (snapshot.pairingDetail.isBlank()) View.GONE else View.VISIBLE
     deviceNameTextView.text = snapshot.deviceName.ifBlank { "Android Device" }
     projectIdTextView.text = "Firebase Project: ${snapshot.projectId.ifBlank { "未读取到" }}"
     packageNameTextView.text = "包名: ${snapshot.packageName.ifBlank { "未读取到" }}"
