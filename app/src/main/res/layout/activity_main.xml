@@ -126,6 +126,36 @@
         android:lineSpacingExtra="3dp"
         android:textColor="@color/slate_600"
         android:textSize="14sp" />
+
+      <LinearLayout
+        android:id="@+id/pairedClientContainerView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <TextView
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/paired_browser_label"
+          android:textColor="@color/slate_500"
+          android:textSize="12sp"
+          android:textStyle="bold" />
+
+        <TextView
+          android:id="@+id/pairedClientTextView"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:layout_marginTop="8dp"
+          android:background="@drawable/token_surface"
+          android:fontFamily="monospace"
+          android:lineSpacingExtra="3dp"
+          android:padding="14dp"
+          android:textColor="@color/slate_700"
+          android:textIsSelectable="true"
+          android:textSize="13sp" />
+      </LinearLayout>
     </LinearLayout>
 
     <LinearLayout

@@ -151,6 +151,7 @@ object RegistrationRepository {
       }
 
       val registerResponse = postJson("${BuildConfig.NOTIFY_BASE_URL}/gcm/register", registerPayload)
+      val registerRegistration = registerResponse.body.optJSONObject("registration")
       val registrationId = registerResponse.body
         .optJSONObject("registration")
         ?.optString("id")
@@ -160,6 +161,7 @@ object RegistrationRepository {
         .optJSONObject("registration")
         ?.optInt("pairedClientCount")
         ?: 0
+      var pairedClientSummary = readPairedClientSummary(registerRegistration)
       val registeredCount = registerResponse.body.optJSONObject("setup")?.optInt("gcmRegistrationCount") ?: 0
       DebugLogStore.append(
         context,
@@ -181,10 +183,12 @@ object RegistrationRepository {
         }
 
         val checkResponse = postJson("${BuildConfig.NOTIFY_BASE_URL}/gcm/check", checkPayload)
+        val checkRegistration = checkResponse.body.optJSONObject("registration")
         pairedClientCount = checkResponse.body
           .optJSONObject("registration")
           ?.optInt("pairedClientCount")
           ?: pairedClientCount
+        pairedClientSummary = readPairedClientSummary(checkRegistration).ifBlank { pairedClientSummary }
         val detail = checkResponse.body
           .optJSONObject("result")
           ?.optString("detail")
@@ -219,7 +223,8 @@ object RegistrationRepository {
           code = "",
           expiresAt = "",
           status = "paired",
-          detail = ""
+          detail = "当前设备已完成前端配对。",
+          pairedClientSummary = pairedClientSummary.ifBlank { previousSnapshot.pairedClientSummary }
         )
       } else {
         try {
@@ -239,9 +244,16 @@ object RegistrationRepository {
             code = "",
             expiresAt = "",
             status = "error",
-            detail = pairingError.message ?: "配对码生成失败"
+            detail = pairingError.message ?: "配对码生成失败",
+            pairedClientSummary = ""
           )
         }
+      }
+
+      val resolvedPairedClientSummary = if (pairingState.status == "paired") {
+        pairingState.pairedClientSummary.ifBlank { previousSnapshot.pairedClientSummary }
+      } else {
+        ""
       }
 
       val snapshot = RegistrationSnapshot(
@@ -261,7 +273,8 @@ object RegistrationRepository {
         pairingCode = pairingState.code,
         pairingCodeExpiresAt = pairingState.expiresAt,
         pairingStatus = pairingState.status,
-        pairingDetail = pairingState.detail
+        pairingDetail = pairingState.detail,
+        pairedClientSummary = resolvedPairedClientSummary
       )
       RegistrationStateStore.write(context, snapshot)
       snapshot
@@ -303,7 +316,8 @@ object RegistrationRepository {
         code = "",
         expiresAt = expiresAt,
         status = "unavailable",
-        detail = ""
+        detail = "",
+        pairedClientSummary = ""
       )
     } else {
       DebugLogStore.append(context, "pairing", "Pairing code issued: $code expiresAt=${expiresAt.ifBlank { "-" }}")
@@ -311,7 +325,8 @@ object RegistrationRepository {
         code = code,
         expiresAt = expiresAt,
         status = "issued",
-        detail = if (expiresAt.isBlank()) "" else "有效期至 ${formatIsoLabel(expiresAt)}"
+        detail = if (expiresAt.isBlank()) "" else "有效期至 ${formatIsoLabel(expiresAt)}",
+        pairedClientSummary = ""
       )
     }
   }
@@ -436,10 +451,39 @@ object RegistrationRepository {
       pairingCode = previousSnapshot.pairingCode,
       pairingCodeExpiresAt = previousSnapshot.pairingCodeExpiresAt,
       pairingStatus = previousSnapshot.pairingStatus,
-      pairingDetail = previousSnapshot.pairingDetail
+      pairingDetail = previousSnapshot.pairingDetail,
+      pairedClientSummary = previousSnapshot.pairedClientSummary
     )
     RegistrationStateStore.write(context, snapshot)
     return snapshot
+  }
+
+  private fun readPairedClientSummary(registrationPayload: JSONObject?): String {
+    val pairedClients = registrationPayload?.optJSONArray("pairedClients") ?: return ""
+    val summaries = mutableListOf<String>()
+
+    for (index in 0 until pairedClients.length()) {
+      val client = pairedClients.optJSONObject(index) ?: continue
+      val clientId = client.optString("clientId").trim()
+      val clientName = client.optString("clientName").trim()
+      val summary = buildString {
+        if (clientName.isNotBlank()) {
+          append(clientName)
+        }
+        if (clientId.isNotBlank()) {
+          if (isNotEmpty()) {
+            append("\n")
+          }
+          append(clientId)
+        }
+      }.trim()
+
+      if (summary.isNotBlank()) {
+        summaries += summary
+      }
+    }
+
+    return summaries.joinToString("\n\n")
   }
 
   private fun describeTokenFetchFailure(error: Exception): String {
@@ -526,6 +570,7 @@ object RegistrationRepository {
     val code: String,
     val expiresAt: String,
     val status: String,
-    val detail: String
+    val detail: String,
+    val pairedClientSummary: String
   )
 }

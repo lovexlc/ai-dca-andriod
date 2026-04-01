@@ -26,6 +26,8 @@ class MainActivity : Activity() {
   private lateinit var pairingStatusTextView: TextView
   private lateinit var pairingCodeTextView: TextView
   private lateinit var pairingDetailTextView: TextView
+  private lateinit var pairedClientContainerView: LinearLayout
+  private lateinit var pairedClientTextView: TextView
   private lateinit var deviceNameTextView: TextView
   private lateinit var projectIdTextView: TextView
   private lateinit var packageNameTextView: TextView
@@ -95,6 +97,8 @@ class MainActivity : Activity() {
     pairingStatusTextView = findViewById(R.id.pairingStatusTextView)
     pairingCodeTextView = findViewById(R.id.pairingCodeTextView)
     pairingDetailTextView = findViewById(R.id.pairingDetailTextView)
+    pairedClientContainerView = findViewById(R.id.pairedClientContainerView)
+    pairedClientTextView = findViewById(R.id.pairedClientTextView)
     deviceNameTextView = findViewById(R.id.deviceNameTextView)
     projectIdTextView = findViewById(R.id.projectIdTextView)
     packageNameTextView = findViewById(R.id.packageNameTextView)
@@ -214,17 +218,20 @@ class MainActivity : Activity() {
     statusDetailTextView.text = snapshot.detail
     statusDetailTextView.visibility = if (snapshot.detail.isBlank()) View.GONE else View.VISIBLE
     statusUpdatedAtTextView.text = if (snapshot.updatedAt.isBlank()) "尚未完成自动注册" else "最近更新: ${snapshot.updatedAt}"
-    pairingCardView.visibility = if (snapshot.pairingStatus == "paired") View.GONE else View.VISIBLE
+    pairingCardView.visibility = View.VISIBLE
     pairingStatusTextView.text = when (snapshot.pairingStatus) {
       "issued" -> "前端配对码已生成"
       "error" -> "前端配对码生成失败"
-      "paired" -> "当前设备已完成前端配对"
+      "paired" -> "当前设备已绑定浏览器"
       "unavailable" -> "前端配对码暂不可用"
       else -> "等待生成前端配对码"
     }
+    pairingCodeTextView.visibility = if (snapshot.pairingStatus == "paired") View.GONE else View.VISIBLE
     pairingCodeTextView.text = if (snapshot.pairingCode.isBlank()) "--------" else snapshot.pairingCode
     pairingDetailTextView.text = snapshot.pairingDetail
     pairingDetailTextView.visibility = if (snapshot.pairingDetail.isBlank()) View.GONE else View.VISIBLE
+    pairedClientTextView.text = snapshot.pairedClientSummary
+    pairedClientContainerView.visibility = if (snapshot.pairedClientSummary.isBlank()) View.GONE else View.VISIBLE
     deviceNameTextView.text = snapshot.deviceName.ifBlank { "Android Device" }
     projectIdTextView.text = "Firebase Project: ${snapshot.projectId.ifBlank { "未读取到" }}"
     packageNameTextView.text = "包名: ${snapshot.packageName.ifBlank { "未读取到" }}"
