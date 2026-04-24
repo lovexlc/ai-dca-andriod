@@ -291,11 +291,21 @@
         android:textColor="@color/slate_700"
         android:textSize="13sp" />
 
-      <LinearLayout
-        android:id="@+id/messageHistoryContainer"
+      <ScrollView
+        android:id="@+id/messageHistoryScrollView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical" />
+        android:layout_marginTop="14dp"
+        android:maxHeight="360dp"
+        android:scrollbars="vertical"
+        android:overScrollMode="ifContentScrolls">
+
+        <LinearLayout
+          android:id="@+id/messageHistoryContainer"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:orientation="vertical" />
+      </ScrollView>
     </LinearLayout>
 
     <LinearLayout

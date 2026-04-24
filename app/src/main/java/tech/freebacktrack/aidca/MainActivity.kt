@@ -13,6 +13,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 
@@ -37,6 +38,7 @@ class MainActivity : Activity() {
   private lateinit var tokenTextView: TextView
   private lateinit var deliveryStatusTextView: TextView
   private lateinit var messageHistoryContainer: LinearLayout
+  private lateinit var messageHistoryScrollView: ScrollView
   private lateinit var debugCardView: LinearLayout
   private lateinit var debugLogTextView: TextView
   private lateinit var copyDebugLogsButton: Button
@@ -48,6 +50,7 @@ class MainActivity : Activity() {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_main)
     bindViews()
+    setupMessageHistoryScroll()
     setupDebugToggle()
     setupDeviceIdentityActions()
     setupDebugActions()
@@ -108,10 +111,19 @@ class MainActivity : Activity() {
     tokenTextView = findViewById(R.id.tokenTextView)
     deliveryStatusTextView = findViewById(R.id.deliveryStatusTextView)
     messageHistoryContainer = findViewById(R.id.messageHistoryContainer)
+    messageHistoryScrollView = findViewById(R.id.messageHistoryScrollView)
     debugCardView = findViewById(R.id.debugCardView)
     debugLogTextView = findViewById(R.id.debugLogTextView)
     copyDebugLogsButton = findViewById(R.id.copyDebugLogsButton)
     clearDebugLogsButton = findViewById(R.id.clearDebugLogsButton)
+  }
+
+  // 内层消息列表 ScrollView 与外层页面 ScrollView 嵌套，拉动时需要阻止父级拦截，否则手势会被外层截走。
+  private fun setupMessageHistoryScroll() {
+    messageHistoryScrollView.setOnTouchListener { view, _ ->
+      view.parent?.requestDisallowInterceptTouchEvent(true)
+      false
+    }
   }
 
   private fun setupDeviceIdentityActions() {
