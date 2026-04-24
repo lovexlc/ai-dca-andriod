@@ -3,6 +3,7 @@
   android:layout_width="match_parent"
   android:layout_height="match_parent"
   android:background="@color/surface_page"
+  android:fitsSystemWindows="true"
   android:fillViewport="true">
 
   <LinearLayout
@@ -294,9 +295,8 @@
       <ScrollView
         android:id="@+id/messageHistoryScrollView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="360dp"
         android:layout_marginTop="14dp"
-        android:maxHeight="360dp"
         android:scrollbars="vertical"
         android:overScrollMode="ifContentScrolls">
 
