@@ -22,6 +22,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Validate Gradle Wrapper
         uses: gradle/actions/wrapper-validation@v4
@@ -104,7 +106,11 @@ jobs:
           } > "${NOTES_FILE}"
 
           if [ -n "${BEFORE_SHA}" ] && [ "${BEFORE_SHA}" != "0000000000000000000000000000000000000000" ]; then
-            git log --no-merges --pretty=format:'- `%h` %s' "${BEFORE_SHA}..${GITHUB_SHA}" >> "${NOTES_FILE}"
+            if git cat-file -e "${BEFORE_SHA}^{commit}" 2>/dev/null; then
+              git log --no-merges --pretty=format:'- `%h` %s' "${BEFORE_SHA}..${GITHUB_SHA}" >> "${NOTES_FILE}"
+            else
+              git log -1 --pretty=format:'- `%h` %s' "${GITHUB_SHA}" >> "${NOTES_FILE}"
+            fi
           else
             git log -1 --pretty=format:'- `%h` %s' "${GITHUB_SHA}" >> "${NOTES_FILE}"
           fi
