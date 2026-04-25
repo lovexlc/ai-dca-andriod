@@ -4,6 +4,7 @@
   <string name="status_label">当前状态</string>
   <string name="device_info_label">设备信息</string>
   <string name="delivery_label">消息记录</string>
+  <string name="message_history_label">消息历史</string>
   <string name="pairing_label">前端配对</string>
   <string name="paired_browser_label">已绑定浏览器</string>
   <string name="device_installation_id_label">设备唯一 ID</string>

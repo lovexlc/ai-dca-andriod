@@ -11,6 +11,7 @@ import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
+import android.view.WindowInsets
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -50,6 +51,7 @@ class MainActivity : Activity() {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_main)
     bindViews()
+    applyWindowInsets()
     setupMessageHistoryScroll()
     setupDebugToggle()
     setupDeviceIdentityActions()
@@ -124,6 +126,29 @@ class MainActivity : Activity() {
       view.parent?.requestDisallowInterceptTouchEvent(true)
       false
     }
+  }
+
+  // targetSdk 35 强制 edge-to-edge 时，状态栏会覆盖内容；用 WindowInsets 显式吸收 systemBars
+  // 顶部和底部高度，作为根 ScrollView 的 padding，避免顶部贴状态栏、底部被导航条遮住。
+  private fun applyWindowInsets() {
+    val rootScrollView = findViewById<ScrollView>(R.id.rootScrollView)
+    rootScrollView.setOnApplyWindowInsetsListener { view, insets ->
+      val top: Int
+      val bottom: Int
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        val bars = insets.getInsets(WindowInsets.Type.systemBars())
+        top = bars.top
+        bottom = bars.bottom
+      } else {
+        @Suppress("DEPRECATION")
+        top = insets.systemWindowInsetTop
+        @Suppress("DEPRECATION")
+        bottom = insets.systemWindowInsetBottom
+      }
+      view.setPadding(view.paddingLeft, top, view.paddingRight, bottom)
+      insets
+    }
+    rootScrollView.requestApplyInsets()
   }
 
   private fun setupDeviceIdentityActions() {
