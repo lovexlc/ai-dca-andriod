@@ -142,10 +142,9 @@ jobs:
       - name: Prepare Tag Release APK Name
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
+          cp app/build/outputs/apk/debug/app-debug.apk "ai-dca-android-notify-${GITHUB_REF_NAME}-debug.apk"
           if [ "${HAS_ANDROID_SIGNING}" = "true" ] && [ -f app/build/outputs/apk/release/app-release.apk ]; then
-            cp app/build/outputs/apk/release/app-release.apk "ai-dca-android-notify-${GITHUB_REF_NAME}.apk"
-          else
-            cp app/build/outputs/apk/debug/app-debug.apk "ai-dca-android-notify-${GITHUB_REF_NAME}.apk"
+            cp app/build/outputs/apk/release/app-release.apk "ai-dca-android-notify-${GITHUB_REF_NAME}-release.apk"
           fi
 
       - name: Create Or Update Release
@@ -153,11 +152,17 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          APK_NAME="ai-dca-android-notify-${GITHUB_REF_NAME}.apk"
+          DEBUG_APK="ai-dca-android-notify-${GITHUB_REF_NAME}-debug.apk"
+          RELEASE_APK="ai-dca-android-notify-${GITHUB_REF_NAME}-release.apk"
+          ASSETS=("${DEBUG_APK}")
+          if [ -f "${RELEASE_APK}" ]; then
+            ASSETS+=("${RELEASE_APK}")
+          fi
           if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
-            gh release upload "${GITHUB_REF_NAME}" "${APK_NAME}" --clobber
+            gh release upload "${GITHUB_REF_NAME}" "${ASSETS[@]}" --clobber
           else
-            gh release create "${GITHUB_REF_NAME}" "${APK_NAME}" \
+            gh release create "${GITHUB_REF_NAME}" "${ASSETS[@]}" \
+              --target "${GITHUB_SHA}" \
               --title "${GITHUB_REF_NAME}" \
               --generate-notes
           fi
