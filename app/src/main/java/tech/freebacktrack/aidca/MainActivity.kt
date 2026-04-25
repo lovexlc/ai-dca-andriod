@@ -37,7 +37,6 @@ class MainActivity : Activity() {
   private lateinit var deviceInstallationIdTextView: TextView
   private lateinit var copyDeviceInstallationIdButton: Button
   private lateinit var tokenTextView: TextView
-  private lateinit var deliveryStatusTextView: TextView
   private lateinit var messageHistoryContainer: LinearLayout
   private lateinit var messageHistoryScrollView: ScrollView
   private lateinit var debugCardView: LinearLayout
@@ -60,7 +59,6 @@ class MainActivity : Activity() {
 
     val identity = RegistrationRepository.currentIdentity(this)
     renderSnapshot(RegistrationStateStore.read(this, identity))
-    renderDeliveryReceipt()
     renderMessageHistory()
     renderDebugPanel()
     requestNotificationPermissionIfNeeded()
@@ -87,7 +85,6 @@ class MainActivity : Activity() {
 
   override fun onResume() {
     super.onResume()
-    renderDeliveryReceipt()
     renderMessageHistory()
     renderDebugPanel()
   }
@@ -111,7 +108,6 @@ class MainActivity : Activity() {
     deviceInstallationIdTextView = findViewById(R.id.deviceInstallationIdTextView)
     copyDeviceInstallationIdButton = findViewById(R.id.copyDeviceInstallationIdButton)
     tokenTextView = findViewById(R.id.tokenTextView)
-    deliveryStatusTextView = findViewById(R.id.deliveryStatusTextView)
     messageHistoryContainer = findViewById(R.id.messageHistoryContainer)
     messageHistoryScrollView = findViewById(R.id.messageHistoryScrollView)
     debugCardView = findViewById(R.id.debugCardView)
@@ -233,7 +229,6 @@ class MainActivity : Activity() {
 
     RegistrationRepository.refresh(this, trigger) { snapshot ->
       renderSnapshot(snapshot)
-      renderDeliveryReceipt()
       renderMessageHistory()
       DebugLogStore.append(applicationContext, "ui", "Registration finished with state=${snapshot.state}")
       renderDebugPanel()
@@ -253,7 +248,10 @@ class MainActivity : Activity() {
     statusBadgeTextView.setTextColor(getColor(badge.textColorRes))
     statusTitleTextView.text = snapshot.title
     statusDetailTextView.text = snapshot.detail
-    statusDetailTextView.visibility = if (snapshot.detail.isBlank()) View.GONE else View.VISIBLE
+    // 成功状态下徽章 + 标题已经表达了「服务端已连通」，不再显示「FCM http v1 已连通」之类的冗余 detail。
+    val hideDetailOnSuccess = snapshot.state == "validated" || snapshot.state == "connected"
+    statusDetailTextView.visibility =
+      if (snapshot.detail.isBlank() || hideDetailOnSuccess) View.GONE else View.VISIBLE
     statusUpdatedAtTextView.text = if (snapshot.updatedAt.isBlank()) "尚未完成自动注册" else "最近更新: ${snapshot.updatedAt}"
     pairingCardView.visibility = View.VISIBLE
     pairingStatusTextView.text = when (snapshot.pairingStatus) {
@@ -275,43 +273,6 @@ class MainActivity : Activity() {
     senderIdTextView.text = "Sender ID: ${snapshot.senderId.ifBlank { "未读取到" }}"
     deviceInstallationIdTextView.text = snapshot.deviceInstallationId.ifBlank { DeviceInstallationStore.getOrCreate(applicationContext) }
     tokenTextView.text = if (snapshot.tokenMasked.isBlank()) "FCM token 尚未可用" else "Token: ${snapshot.tokenMasked}"
-  }
-
-  private fun renderDeliveryReceipt() {
-    val receipt = DeliveryReceiptStore.read(this)
-
-    deliveryStatusTextView.text = if (receipt == null) {
-      getString(R.string.delivery_status_empty)
-    } else {
-      val prefix = if (receipt.status == "display-error") {
-        getString(R.string.delivery_status_error_prefix)
-      } else {
-        getString(R.string.delivery_status_received_prefix)
-      }
-
-      buildString {
-        append(prefix)
-        append(receipt.receivedAt)
-
-        if (receipt.title.isNotBlank()) {
-          append('\n')
-          append("标题: ")
-          append(receipt.title)
-        }
-
-        if (receipt.body.isNotBlank()) {
-          append('\n')
-          append("内容: ")
-          append(receipt.body)
-        }
-
-        if (receipt.messageId.isNotBlank()) {
-          append('\n')
-          append("Message ID: ")
-          append(receipt.messageId)
-        }
-      }
-    }
   }
 
   private fun renderMessageHistory() {

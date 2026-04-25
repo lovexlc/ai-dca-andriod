@@ -3,7 +3,6 @@
   <string name="app_name">AI DCA Notify</string>
   <string name="status_label">当前状态</string>
   <string name="device_info_label">设备信息</string>
-  <string name="delivery_label">消息记录</string>
   <string name="message_history_label">消息历史</string>
   <string name="pairing_label">前端配对</string>
   <string name="paired_browser_label">已绑定浏览器</string>
@@ -26,7 +25,4 @@
   <string name="debug_mode_disabled">调试模式已关闭</string>
   <string name="debug_logs_copied">调试日志已复制</string>
   <string name="debug_logs_cleared">调试日志已清空</string>
-  <string name="delivery_status_empty">还没有推送到达记录。</string>
-  <string name="delivery_status_received_prefix">最近一次真实推送到达时间: </string>
-  <string name="delivery_status_error_prefix">最近一次推送已到达，但展示通知时出错: </string>
 </resources>
