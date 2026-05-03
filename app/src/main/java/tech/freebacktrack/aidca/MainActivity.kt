@@ -46,6 +46,10 @@ class MainActivity : Activity() {
   private lateinit var copyTokenButton: Button
   private lateinit var updateStatusTextView: TextView
   private lateinit var checkUpdateButton: Button
+  private lateinit var navHistoryButton: Button
+  private lateinit var navSettingsButton: Button
+  private lateinit var historySection: LinearLayout
+  private lateinit var settingsSection: LinearLayout
   private lateinit var messageHistoryContainer: LinearLayout
   private lateinit var messageHistoryScrollView: ScrollView
   private lateinit var debugCardView: LinearLayout
@@ -67,6 +71,7 @@ class MainActivity : Activity() {
     setupDeviceIdentityActions()
     setupTokenActions()
     setupUpdateActions()
+    setupBottomNavigation()
     setupDebugActions()
     DebugLogStore.append(applicationContext, "ui", "MainActivity onCreate")
 
@@ -124,6 +129,10 @@ class MainActivity : Activity() {
     copyTokenButton = findViewById(R.id.copyTokenButton)
     updateStatusTextView = findViewById(R.id.updateStatusTextView)
     checkUpdateButton = findViewById(R.id.checkUpdateButton)
+    navHistoryButton = findViewById(R.id.navHistoryButton)
+    navSettingsButton = findViewById(R.id.navSettingsButton)
+    historySection = findViewById(R.id.historySection)
+    settingsSection = findViewById(R.id.settingsSection)
     messageHistoryContainer = findViewById(R.id.messageHistoryContainer)
     messageHistoryScrollView = findViewById(R.id.messageHistoryScrollView)
     debugCardView = findViewById(R.id.debugCardView)
@@ -238,6 +247,32 @@ class MainActivity : Activity() {
         }
       }
     }
+  }
+
+  private fun setupBottomNavigation() {
+    navHistoryButton.setOnClickListener {
+      historySection.visibility = View.VISIBLE
+      settingsSection.visibility = View.GONE
+      rootScrollView().post {
+        rootScrollView().fullScroll(View.FOCUS_UP)
+      }
+    }
+
+    navSettingsButton.setOnClickListener {
+      settingsSection.visibility = View.VISIBLE
+      historySection.visibility = View.GONE
+      rootScrollView().post {
+        rootScrollView().fullScroll(View.FOCUS_UP)
+      }
+    }
+
+    // default: show history
+    historySection.visibility = View.VISIBLE
+    settingsSection.visibility = View.GONE
+  }
+
+  private fun rootScrollView(): ScrollView {
+    return findViewById(R.id.rootScrollView)
   }
 
   private fun setupDebugToggle() {

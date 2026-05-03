@@ -33,4 +33,6 @@
   <string name="token_label">Token</string>
   <string name="action_copy_token">复制 Token</string>
   <string name="token_copied">Token 已复制</string>
+  <string name="nav_history">历史消息</string>
+  <string name="nav_settings">设置</string>
 </resources>
