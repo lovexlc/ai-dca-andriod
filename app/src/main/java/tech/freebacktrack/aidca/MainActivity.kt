@@ -9,6 +9,8 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowInsets
@@ -17,6 +19,10 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
+import org.json.JSONObject
+import java.net.HttpURLConnection
+import java.net.URL
+import java.util.concurrent.Executors
 
 class MainActivity : Activity() {
   private lateinit var titleTextView: TextView
@@ -37,6 +43,9 @@ class MainActivity : Activity() {
   private lateinit var deviceInstallationIdTextView: TextView
   private lateinit var copyDeviceInstallationIdButton: Button
   private lateinit var tokenTextView: TextView
+  private lateinit var copyTokenButton: Button
+  private lateinit var updateStatusTextView: TextView
+  private lateinit var checkUpdateButton: Button
   private lateinit var messageHistoryContainer: LinearLayout
   private lateinit var messageHistoryScrollView: ScrollView
   private lateinit var debugCardView: LinearLayout
@@ -45,6 +54,8 @@ class MainActivity : Activity() {
   private lateinit var clearDebugLogsButton: Button
   private var titleTapCount = 0
   private var lastTitleTapAtMs = 0L
+  private val executor = Executors.newSingleThreadExecutor()
+  private val mainHandler = Handler(Looper.getMainLooper())
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -54,6 +65,8 @@ class MainActivity : Activity() {
     setupMessageHistoryScroll()
     setupDebugToggle()
     setupDeviceIdentityActions()
+    setupTokenActions()
+    setupUpdateActions()
     setupDebugActions()
     DebugLogStore.append(applicationContext, "ui", "MainActivity onCreate")
 
@@ -108,6 +121,9 @@ class MainActivity : Activity() {
     deviceInstallationIdTextView = findViewById(R.id.deviceInstallationIdTextView)
     copyDeviceInstallationIdButton = findViewById(R.id.copyDeviceInstallationIdButton)
     tokenTextView = findViewById(R.id.tokenTextView)
+    copyTokenButton = findViewById(R.id.copyTokenButton)
+    updateStatusTextView = findViewById(R.id.updateStatusTextView)
+    checkUpdateButton = findViewById(R.id.checkUpdateButton)
     messageHistoryContainer = findViewById(R.id.messageHistoryContainer)
     messageHistoryScrollView = findViewById(R.id.messageHistoryScrollView)
     debugCardView = findViewById(R.id.debugCardView)
@@ -153,6 +169,74 @@ class MainActivity : Activity() {
       val clipboardManager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
       clipboardManager.setPrimaryClip(ClipData.newPlainText("AI DCA Device Installation ID", deviceInstallationId))
       Toast.makeText(this, R.string.device_installation_id_copied, Toast.LENGTH_SHORT).show()
+    }
+  }
+
+  private fun setupTokenActions() {
+    copyTokenButton.setOnClickListener {
+      val tokenText = tokenTextView.text?.toString().orEmpty()
+      val token = tokenText.removePrefix("Token:").trim()
+      if (token.isBlank() || token.contains("尚未")) {
+        Toast.makeText(this, "Token 尚不可用", Toast.LENGTH_SHORT).show()
+        return@setOnClickListener
+      }
+      val clipboardManager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+      clipboardManager.setPrimaryClip(ClipData.newPlainText("AI DCA FCM Token", token))
+      Toast.makeText(this, R.string.token_copied, Toast.LENGTH_SHORT).show()
+    }
+  }
+
+  private fun setupUpdateActions() {
+    updateStatusTextView.text = "当前版本 ${BuildConfig.VERSION_NAME}"
+    updateStatusTextView.setOnClickListener(null)
+    checkUpdateButton.setOnClickListener {
+      checkForUpdates()
+    }
+  }
+
+  private fun checkForUpdates() {
+    updateStatusTextView.text = "正在检查…"
+    updateStatusTextView.setOnClickListener(null)
+    executor.execute {
+      val apiUrl = "https://api.github.com/repos/lovexlc/ai-dca-andriod/releases/latest"
+      val releasesUrl = "https://github.com/lovexlc/ai-dca-andriod/releases/latest"
+      var resultText = ""
+      var openUrl: String? = null
+      try {
+        val conn = (URL(apiUrl).openConnection() as HttpURLConnection).apply {
+          requestMethod = "GET"
+          connectTimeout = 8000
+          readTimeout = 8000
+          setRequestProperty("accept", "application/vnd.github+json")
+          setRequestProperty("user-agent", "ai-dca-android")
+        }
+        val body = conn.inputStream.bufferedReader().use { it.readText() }
+        val json = JSONObject(body)
+        val tag = json.optString("tag_name").trim()
+        val latestName = json.optString("name").trim()
+        val latest = (tag.ifBlank { latestName }).ifBlank { "latest" }
+        val current = BuildConfig.VERSION_NAME.trim()
+        if (latest == "latest" || latest == current) {
+          resultText = getString(R.string.update_latest) + "（$current）"
+        } else {
+          resultText = getString(R.string.update_available) + "：$latest（当前 $current）"
+          openUrl = releasesUrl
+        }
+      } catch (e: Exception) {
+        resultText = "检查失败：${e.message ?: "未知错误"}"
+        openUrl = releasesUrl
+      }
+
+      mainHandler.post {
+        updateStatusTextView.text = resultText
+        if (openUrl != null) {
+          updateStatusTextView.setOnClickListener {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(openUrl)))
+          }
+        } else {
+          updateStatusTextView.setOnClickListener(null)
+        }
+      }
     }
   }
 

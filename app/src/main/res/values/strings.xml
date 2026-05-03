@@ -25,4 +25,12 @@
   <string name="debug_mode_disabled">调试模式已关闭</string>
   <string name="debug_logs_copied">调试日志已复制</string>
   <string name="debug_logs_cleared">调试日志已清空</string>
+  <string name="update_label">检查更新</string>
+  <string name="update_action_check">检查 GitHub 更新</string>
+  <string name="update_latest">已是最新版本</string>
+  <string name="update_available">发现新版本</string>
+  <string name="action_copy">复制</string>
+  <string name="token_label">Token</string>
+  <string name="action_copy_token">复制 Token</string>
+  <string name="token_copied">Token 已复制</string>
 </resources>
