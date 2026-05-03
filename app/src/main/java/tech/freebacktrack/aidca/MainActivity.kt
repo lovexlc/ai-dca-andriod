@@ -254,22 +254,37 @@ class MainActivity : Activity() {
   }
 
   private fun setupBottomNavigation() {
+    fun selectServer() {
+      serverSection.visibility = View.VISIBLE
+      historySection.visibility = View.GONE
+      settingsSection.visibility = View.GONE
+      navServerButton.isSelected = true
+      navHistoryButton.isSelected = false
+      navSettingsButton.isSelected = false
+    }
+
     fun selectHistory() {
+      serverSection.visibility = View.GONE
       historySection.visibility = View.VISIBLE
       settingsSection.visibility = View.GONE
+      navServerButton.isSelected = false
       navHistoryButton.isSelected = true
       navSettingsButton.isSelected = false
     }
 
     fun selectSettings() {
-      settingsSection.visibility = View.VISIBLE
+      serverSection.visibility = View.GONE
       historySection.visibility = View.GONE
+      settingsSection.visibility = View.VISIBLE
+      navServerButton.isSelected = false
       navHistoryButton.isSelected = false
       navSettingsButton.isSelected = true
     }
 
-    navHistoryButton.isClickable = true
-    navSettingsButton.isClickable = true
+    navServerButton.setOnClickListener {
+      selectServer()
+      rootScrollView().post { rootScrollView().fullScroll(View.FOCUS_UP) }
+    }
 
     navHistoryButton.setOnClickListener {
       selectHistory()
@@ -282,7 +297,7 @@ class MainActivity : Activity() {
     }
 
     // default
-    selectHistory()
+    selectServer()
   }
 
 
