@@ -362,6 +362,7 @@
           android:textSize="12sp" />
       </LinearLayout>
 
+
       <LinearLayout
         android:id="@+id/historySection"
         android:layout_width="match_parent"
