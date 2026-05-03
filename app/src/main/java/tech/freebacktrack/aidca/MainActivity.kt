@@ -46,8 +46,8 @@ class MainActivity : Activity() {
   private lateinit var copyTokenButton: Button
   private lateinit var updateStatusTextView: TextView
   private lateinit var checkUpdateButton: Button
-  private lateinit var navHistoryButton: Button
-  private lateinit var navSettingsButton: Button
+  private lateinit var navHistoryButton: TextView
+  private lateinit var navSettingsButton: TextView
   private lateinit var historySection: LinearLayout
   private lateinit var settingsSection: LinearLayout
   private lateinit var messageHistoryContainer: LinearLayout
@@ -250,26 +250,37 @@ class MainActivity : Activity() {
   }
 
   private fun setupBottomNavigation() {
-    navHistoryButton.setOnClickListener {
+    fun selectHistory() {
       historySection.visibility = View.VISIBLE
       settingsSection.visibility = View.GONE
-      rootScrollView().post {
-        rootScrollView().fullScroll(View.FOCUS_UP)
-      }
+      navHistoryButton.isSelected = true
+      navSettingsButton.isSelected = false
+    }
+
+    fun selectSettings() {
+      settingsSection.visibility = View.VISIBLE
+      historySection.visibility = View.GONE
+      navHistoryButton.isSelected = false
+      navSettingsButton.isSelected = true
+    }
+
+    navHistoryButton.isClickable = true
+    navSettingsButton.isClickable = true
+
+    navHistoryButton.setOnClickListener {
+      selectHistory()
+      rootScrollView().post { rootScrollView().fullScroll(View.FOCUS_UP) }
     }
 
     navSettingsButton.setOnClickListener {
-      settingsSection.visibility = View.VISIBLE
-      historySection.visibility = View.GONE
-      rootScrollView().post {
-        rootScrollView().fullScroll(View.FOCUS_UP)
-      }
+      selectSettings()
+      rootScrollView().post { rootScrollView().fullScroll(View.FOCUS_UP) }
     }
 
-    // default: show history
-    historySection.visibility = View.VISIBLE
-    settingsSection.visibility = View.GONE
+    // default
+    selectHistory()
   }
+
 
   private fun rootScrollView(): ScrollView {
     return findViewById(R.id.rootScrollView)
