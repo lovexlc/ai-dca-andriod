@@ -46,8 +46,10 @@ class MainActivity : Activity() {
   private lateinit var copyTokenButton: Button
   private lateinit var updateStatusTextView: TextView
   private lateinit var checkUpdateButton: Button
-  private lateinit var navHistoryButton: TextView
-  private lateinit var navSettingsButton: TextView
+  private lateinit var navServerButton: LinearLayout
+  private lateinit var navHistoryButton: LinearLayout
+  private lateinit var navSettingsButton: LinearLayout
+  private lateinit var serverSection: LinearLayout
   private lateinit var historySection: LinearLayout
   private lateinit var settingsSection: LinearLayout
   private lateinit var messageHistoryContainer: LinearLayout
@@ -129,8 +131,10 @@ class MainActivity : Activity() {
     copyTokenButton = findViewById(R.id.copyTokenButton)
     updateStatusTextView = findViewById(R.id.updateStatusTextView)
     checkUpdateButton = findViewById(R.id.checkUpdateButton)
+    navServerButton = findViewById(R.id.navServerButton)
     navHistoryButton = findViewById(R.id.navHistoryButton)
     navSettingsButton = findViewById(R.id.navSettingsButton)
+    serverSection = findViewById(R.id.serverSection)
     historySection = findViewById(R.id.historySection)
     settingsSection = findViewById(R.id.settingsSection)
     messageHistoryContainer = findViewById(R.id.messageHistoryContainer)
