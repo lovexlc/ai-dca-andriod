@@ -195,7 +195,7 @@ class MainActivity : Activity() {
     copyDeviceInstallationIdButton.setOnClickListener {
       val deviceInstallationId = DeviceInstallationStore.getOrCreate(applicationContext)
       val clipboardManager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-      clipboardManager.setPrimaryClip(ClipData.newPlainText("定投通知 设备 ID", deviceInstallationId))
+      clipboardManager.setPrimaryClip(ClipData.newPlainText("基金通知 设备 ID", deviceInstallationId))
       Toast.makeText(this, R.string.device_installation_id_copied, Toast.LENGTH_SHORT).show()
     }
   }
@@ -209,7 +209,7 @@ class MainActivity : Activity() {
         return@setOnClickListener
       }
       val clipboardManager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-      clipboardManager.setPrimaryClip(ClipData.newPlainText("定投通知 FCM Token", token))
+      clipboardManager.setPrimaryClip(ClipData.newPlainText("基金通知 FCM Token", token))
       Toast.makeText(this, R.string.token_copied, Toast.LENGTH_SHORT).show()
     }
   }
@@ -364,7 +364,7 @@ class MainActivity : Activity() {
         getString(R.string.debug_log_empty)
       }
       val clipboardManager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-      clipboardManager.setPrimaryClip(ClipData.newPlainText("定投通知 调试日志", logText))
+      clipboardManager.setPrimaryClip(ClipData.newPlainText("基金通知 调试日志", logText))
       Toast.makeText(this, R.string.debug_logs_copied, Toast.LENGTH_SHORT).show()
     }
 
