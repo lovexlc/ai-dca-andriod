@@ -53,6 +53,7 @@ class MainActivity : Activity() {
   private lateinit var navServerButton: LinearLayout
   private lateinit var navHistoryButton: LinearLayout
   private lateinit var navSettingsButton: LinearLayout
+  private lateinit var navServerUpdateDot: View
   private lateinit var serverSection: LinearLayout
   private lateinit var historySection: LinearLayout
   private lateinit var settingsSection: LinearLayout
@@ -80,6 +81,7 @@ class MainActivity : Activity() {
     setupTokenActions()
     setupUpdateActions()
     setupBottomNavigation()
+    checkForUpdatesSilently()
     setupDebugActions()
     setupDeviceAdvancedToggle()
     setupHistoryClearAction()
@@ -143,6 +145,7 @@ class MainActivity : Activity() {
     navServerButton = findViewById(R.id.navServerButton)
     navHistoryButton = findViewById(R.id.navHistoryButton)
     navSettingsButton = findViewById(R.id.navSettingsButton)
+    navServerUpdateDot = findViewById(R.id.navServerUpdateDot)
     serverSection = findViewById(R.id.serverSection)
     historySection = findViewById(R.id.historySection)
     settingsSection = findViewById(R.id.settingsSection)
@@ -216,38 +219,30 @@ class MainActivity : Activity() {
     updateStatusTextView.text = "正在检查…"
     updateRowView.isClickable = false
     executor.execute {
-      val apiUrl = "https://api.github.com/repos/lovexlc/ai-dca-andriod/releases/latest"
       val releasesUrl = "https://github.com/lovexlc/ai-dca-andriod/releases/latest"
-      var resultText = ""
+      val current = normalizeVersion(BuildConfig.VERSION_NAME)
+      val result = fetchLatestVersion()
+      val resultText: String
       var openUrl: String? = null
-      try {
-        val conn = (URL(apiUrl).openConnection() as HttpURLConnection).apply {
-          requestMethod = "GET"
-          connectTimeout = 8000
-          readTimeout = 8000
-          setRequestProperty("accept", "application/vnd.github+json")
-          setRequestProperty("user-agent", "ai-dca-android")
-        }
-        val body = conn.inputStream.bufferedReader().use { it.readText() }
-        val json = JSONObject(body)
-        val tag = json.optString("tag_name").trim()
-        val latestName = json.optString("name").trim()
-        val latest = (tag.ifBlank { latestName }).ifBlank { "latest" }
-        val current = BuildConfig.VERSION_NAME.trim()
-        if (latest == "latest" || latest == current) {
-          resultText = "v$current · 已是最新"
-        } else {
-          resultText = "发现新版本 $latest"
-          openUrl = releasesUrl
-        }
-      } catch (e: Exception) {
+      var hasUpdate = false
+      if (result == null) {
         resultText = "检查失败·点此重试"
         openUrl = releasesUrl
+      } else {
+        val (_, latest) = result
+        if (latest.isBlank() || latest == current) {
+          resultText = "v$current · 已是最新"
+        } else {
+          resultText = "发现新版本 v$latest"
+          openUrl = releasesUrl
+          hasUpdate = true
+        }
       }
 
       mainHandler.post {
         updateStatusTextView.text = resultText
         updateRowView.isClickable = true
+        navServerUpdateDot.visibility = if (hasUpdate) View.VISIBLE else View.GONE
         if (openUrl != null) {
           updateRowView.setOnClickListener {
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(openUrl)))
@@ -258,6 +253,49 @@ class MainActivity : Activity() {
           }
         }
       }
+    }
+  }
+
+  // 启动时静默检查一次更新，仅用于点亮设备 Tab 的小红点，不修改设置页的版本文案。
+  private fun checkForUpdatesSilently() {
+    executor.execute {
+      val current = normalizeVersion(BuildConfig.VERSION_NAME)
+      val result = fetchLatestVersion() ?: return@execute
+      val (_, latest) = result
+      val hasUpdate = latest.isNotBlank() && latest != current
+      mainHandler.post {
+        navServerUpdateDot.visibility = if (hasUpdate) View.VISIBLE else View.GONE
+      }
+    }
+  }
+
+  // 把 release tag（如 "app-v1.0.38" / "v1.0.38" / "1.0.38"）归一化为纯数字版本 "1.0.38"。
+  private fun normalizeVersion(raw: String): String {
+    var s = raw.trim()
+    if (s.startsWith("app-")) s = s.removePrefix("app-")
+    if (s.startsWith("v") || s.startsWith("V")) s = s.substring(1)
+    return s
+  }
+
+  // 拉取 GitHub 最新 release，返回 (原始展示名, 归一化版本号)；失败返回 null。
+  private fun fetchLatestVersion(): Pair<String, String>? {
+    return try {
+      val apiUrl = "https://api.github.com/repos/lovexlc/ai-dca-andriod/releases/latest"
+      val conn = (URL(apiUrl).openConnection() as HttpURLConnection).apply {
+        requestMethod = "GET"
+        connectTimeout = 8000
+        readTimeout = 8000
+        setRequestProperty("accept", "application/vnd.github+json")
+        setRequestProperty("user-agent", "ai-dca-android")
+      }
+      val body = conn.inputStream.bufferedReader().use { it.readText() }
+      val json = JSONObject(body)
+      val tag = json.optString("tag_name").trim()
+      val name = json.optString("name").trim()
+      val display = tag.ifBlank { name }
+      if (display.isBlank()) null else Pair(display, normalizeVersion(display))
+    } catch (_: Exception) {
+      null
     }
   }
 

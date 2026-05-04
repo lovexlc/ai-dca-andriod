@@ -643,13 +643,28 @@
         android:paddingTop="10dp"
         android:paddingBottom="10dp">
 
-        <ImageView
-          android:layout_width="22dp"
-          android:layout_height="22dp"
-          android:src="@drawable/ic_nav_server"
-          android:tint="@color/bottom_nav_icon_tint"
-          android:contentDescription="@string/nav_server"
-          android:duplicateParentState="true" />
+        <FrameLayout
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content">
+
+          <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:src="@drawable/ic_nav_server"
+            android:tint="@color/bottom_nav_icon_tint"
+            android:contentDescription="@string/nav_server"
+            android:duplicateParentState="true" />
+
+          <View
+            android:id="@+id/navServerUpdateDot"
+            android:layout_width="9dp"
+            android:layout_height="9dp"
+            android:layout_gravity="top|end"
+            android:layout_marginTop="-2dp"
+            android:layout_marginEnd="-3dp"
+            android:background="@drawable/update_dot"
+            android:visibility="gone" />
+        </FrameLayout>
 
         <TextView
           android:layout_width="wrap_content"
