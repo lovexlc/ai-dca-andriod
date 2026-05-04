@@ -1,20 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+  <!-- Legacy / status palette (kept for code compatibility) -->
   <color name="ink">#0F172A</color>
-  <color name="surface_page">#F8FAFC</color>
+  <color name="surface_page">#F6F7FB</color>
   <color name="surface_card">#FFFFFFFF</color>
-  <color name="surface_token">#EEF2FF</color>
+  <color name="surface_token">#F1F2F9</color>
   <color name="slate_700">#334155</color>
   <color name="slate_600">#475569</color>
   <color name="slate_500">#64748B</color>
   <color name="slate_400">#94A3B8</color>
-  <color name="slate_200">#E2E8F0</color>
-  <color name="indigo_600">#4F46E5</color>
-  <color name="indigo_50">#EEF2FF</color>
-  <color name="emerald_600">#059669</color>
-  <color name="emerald_50">#ECFDF5</color>
+  <color name="slate_200">#E5E7EB</color>
+  <color name="indigo_600">#5B5BD6</color>
+  <color name="indigo_50">#EEF0FF</color>
+  <color name="emerald_600">#0E9F6E</color>
+  <color name="emerald_50">#E7FAF1</color>
   <color name="amber_700">#B45309</color>
-  <color name="amber_50">#FFFBEB</color>
+  <color name="amber_50">#FFF8E6</color>
   <color name="red_600">#DC2626</color>
-  <color name="red_50">#FEF2F2</color>
+  <color name="red_50">#FEEBEB</color>
+
+  <!-- 2026 design tokens -->
+  <color name="brand_500">#5B5BD6</color>
+  <color name="brand_600">#4F46E5</color>
+  <color name="brand_700">#3730A3</color>
+  <color name="brand_50">#EEF0FF</color>
+  <color name="brand_glow">#A5B4FC</color>
+
+  <color name="surface_elevated">#FFFFFF</color>
+  <color name="surface_subtle">#F1F2F9</color>
+  <color name="surface_inset">#FAFAFE</color>
+  <color name="surface_overlay">#0F172A</color>
+  <color name="divider_subtle">#E5E7EB</color>
+  <color name="divider_strong">#D1D5DB</color>
+
+  <color name="text_primary">#0F172A</color>
+  <color name="text_secondary">#475569</color>
+  <color name="text_tertiary">#94A3B8</color>
+  <color name="text_on_hero">#FFFFFF</color>
+  <color name="text_on_hero_muted">#DDDCFB</color>
+
+  <color name="success_500">#10B981</color>
+  <color name="success_50">#E7FAF1</color>
+  <color name="warning_500">#F59E0B</color>
+  <color name="warning_50">#FFF8E6</color>
+  <color name="danger_500">#EF4444</color>
+  <color name="danger_50">#FEEBEB</color>
 </resources>

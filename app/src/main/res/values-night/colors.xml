@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <color name="ink">#E2E8F0</color>
+  <color name="surface_page">#0B0F1A</color>
+  <color name="surface_card">#141A2A</color>
+  <color name="surface_token">#1B2236</color>
+  <color name="slate_700">#CBD5E1</color>
+  <color name="slate_600">#94A3B8</color>
+  <color name="slate_500">#64748B</color>
+  <color name="slate_400">#475569</color>
+  <color name="slate_200">#1F2A40</color>
+  <color name="indigo_600">#818CF8</color>
+  <color name="indigo_50">#1B2240</color>
+  <color name="emerald_600">#34D399</color>
+  <color name="emerald_50">#0B2D24</color>
+  <color name="amber_700">#FBBF24</color>
+  <color name="amber_50">#332710</color>
+  <color name="red_600">#F87171</color>
+  <color name="red_50">#3A1818</color>
+
+  <color name="brand_500">#818CF8</color>
+  <color name="brand_600">#6366F1</color>
+  <color name="brand_700">#4F46E5</color>
+  <color name="brand_50">#1B2240</color>
+  <color name="brand_glow">#312E81</color>
+
+  <color name="surface_elevated">#1A2236</color>
+  <color name="surface_subtle">#141A2A</color>
+  <color name="surface_inset">#0E1424</color>
+  <color name="surface_overlay">#0B0F1A</color>
+  <color name="divider_subtle">#1F2A40</color>
+  <color name="divider_strong">#283248</color>
+
+  <color name="text_primary">#F1F5F9</color>
+  <color name="text_secondary">#CBD5E1</color>
+  <color name="text_tertiary">#64748B</color>
+  <color name="text_on_hero">#FFFFFF</color>
+  <color name="text_on_hero_muted">#C7D2FE</color>
+
+  <color name="success_500">#34D399</color>
+  <color name="success_50">#0B2D24</color>
+  <color name="warning_500">#FBBF24</color>
+  <color name="warning_50">#332710</color>
+  <color name="danger_500">#F87171</color>
+  <color name="danger_50">#3A1818</color>
+</resources>

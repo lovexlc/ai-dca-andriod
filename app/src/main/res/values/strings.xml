@@ -7,11 +7,11 @@
   <string name="pairing_label">前端配对</string>
   <string name="paired_browser_label">已绑定浏览器</string>
   <string name="device_installation_id_label">设备唯一 ID</string>
-  <string name="action_copy_device_id">复制设备 ID</string>
-  <string name="device_installation_id_copied">设备唯一 ID 已复制</string>
+  <string name="action_copy_device_id">复制</string>
+  <string name="device_installation_id_copied">设备 ID 已复制</string>
   <string name="message_history_empty">还没有收到推送记录。</string>
-  <string name="message_action_open_detail">去网站看详情</string>
-  <string name="status_idle">等待处理</string>
+  <string name="message_action_open_detail">查看详情</string>
+  <string name="status_idle">等待</string>
   <string name="permission_denied_message">通知权限未开启，系统可能不会展示推送。</string>
   <string name="notification_channel_name">AI DCA 通知</string>
   <string name="notification_channel_description">交易计划和定投提醒</string>
@@ -30,9 +30,11 @@
   <string name="update_available">发现新版本</string>
   <string name="action_copy">复制</string>
   <string name="token_label">Token</string>
-  <string name="action_copy_token">复制 Token</string>
+  <string name="action_copy_token">复制</string>
   <string name="token_copied">Token 已复制</string>
-  <string name="nav_history">历史消息</string>
-  <string name="nav_settings">设置</string>
-  <string name="nav_server">服务器</string>
+  <string name="nav_history">消息</string>
+  <string name="nav_settings">设备</string>
+  <string name="nav_server">状态</string>
+  <string name="online_label">在线</string>
+  <string name="advanced_label">高级</string>
 </resources>

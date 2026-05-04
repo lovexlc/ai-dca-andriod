@@ -4,6 +4,7 @@
     <item name="android:statusBarColor">@color/surface_page</item>
     <item name="android:windowLightStatusBar">true</item>
     <item name="android:windowBackground">@color/surface_page</item>
+    <item name="android:colorAccent">@color/brand_600</item>
     <!-- Android 15 (API 35) targetSdk 强制 edge-to-edge 会让状态栏覆盖内容；退出强制行为，保持传统非 edge-to-edge 布局。 -->
     <item name="android:windowOptOutEdgeToEdgeEnforcement" tools:targetApi="35">true</item>
   </style>
