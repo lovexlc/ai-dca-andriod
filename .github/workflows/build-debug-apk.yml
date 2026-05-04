@@ -37,6 +37,14 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Compute App Version
+        run: |
+          # 大版本号在这里手动调（如 1.1、2.0）；patch = CI run number 自动递增
+          APP_VERSION_BASE="1.0"
+          APP_VERSION="${APP_VERSION_BASE}.${GITHUB_RUN_NUMBER}"
+          echo "APP_VERSION=${APP_VERSION}" >> "${GITHUB_ENV}"
+          echo "ANDROID_VERSION_NAME=${APP_VERSION}" >> "${GITHUB_ENV}"
+
       - name: Materialize google-services.json
         env:
           GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
@@ -85,10 +93,10 @@ jobs:
           BEFORE_SHA: ${{ github.event.before }}
         run: |
           SHORT_SHA="${GITHUB_SHA::7}"
-          RELEASE_TAG="main-build-${GITHUB_RUN_NUMBER}"
-          RELEASE_TITLE="Main Build #${GITHUB_RUN_NUMBER}"
-          APK_NAME="ai-dca-android-notify-main-${GITHUB_RUN_NUMBER}-${SHORT_SHA}.apk"
-          NOTES_FILE="release-notes-main-${GITHUB_RUN_NUMBER}.md"
+          RELEASE_TAG="app-v${APP_VERSION}"
+          RELEASE_TITLE="基金通知 v${APP_VERSION}"
+          APK_NAME="jijin-notify-v${APP_VERSION}-${SHORT_SHA}.apk"
+          NOTES_FILE="release-notes-v${APP_VERSION}.md"
 
           if [ "${HAS_ANDROID_SIGNING}" = "true" ] && [ -f app/build/outputs/apk/release/app-release.apk ]; then
             cp app/build/outputs/apk/release/app-release.apk "${APK_NAME}"

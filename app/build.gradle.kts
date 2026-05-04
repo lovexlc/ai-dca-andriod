@@ -28,6 +28,8 @@ fun propertyValue(name: String, envName: String = name): String? {
 val configuredVersionCode = propertyValue("androidVersionCode", "ANDROID_VERSION_CODE")
   ?.toIntOrNull()
   ?: 1
+val configuredVersionName = propertyValue("androidVersionName", "ANDROID_VERSION_NAME")
+  ?: "1.0.0"
 val releaseKeystoreFile = rootProject.file(propertyValue("storeFile") ?: "release.jks")
 val releaseStorePassword = propertyValue("storePassword", "ANDROID_KEYSTORE_PASSWORD")
 val releaseKeyAlias = propertyValue("keyAlias", "ANDROID_KEY_ALIAS")
@@ -46,7 +48,7 @@ android {
     minSdk = 26
     targetSdk = 35
     versionCode = configuredVersionCode
-    versionName = "0.1.0"
+    versionName = configuredVersionName
 
     buildConfigField("String", "NOTIFY_BASE_URL", "\"https://tools.freebacktrack.tech/api/notify\"")
   }
