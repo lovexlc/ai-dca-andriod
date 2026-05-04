@@ -45,7 +45,7 @@ class MainActivity : Activity() {
   private lateinit var tokenTextView: TextView
   private lateinit var copyTokenButton: Button
   private lateinit var updateStatusTextView: TextView
-  private lateinit var checkUpdateButton: Button
+  private lateinit var updateRowView: LinearLayout
   private lateinit var navServerButton: LinearLayout
   private lateinit var navHistoryButton: LinearLayout
   private lateinit var navSettingsButton: LinearLayout
@@ -130,7 +130,7 @@ class MainActivity : Activity() {
     tokenTextView = findViewById(R.id.tokenTextView)
     copyTokenButton = findViewById(R.id.copyTokenButton)
     updateStatusTextView = findViewById(R.id.updateStatusTextView)
-    checkUpdateButton = findViewById(R.id.checkUpdateButton)
+    updateRowView = findViewById(R.id.updateRowView)
     navServerButton = findViewById(R.id.navServerButton)
     navHistoryButton = findViewById(R.id.navHistoryButton)
     navSettingsButton = findViewById(R.id.navSettingsButton)
@@ -200,16 +200,17 @@ class MainActivity : Activity() {
   }
 
   private fun setupUpdateActions() {
-    updateStatusTextView.text = "当前版本 ${BuildConfig.VERSION_NAME}"
-    updateStatusTextView.setOnClickListener(null)
-    checkUpdateButton.setOnClickListener {
+    // 参考 iOS 设置 / Telegram / Linear 的常见设计：进入设置页默认只显示当前版本，
+    // 点整行才去请求 GitHub 检查，避免打开页面就走一次外网请求。
+    updateStatusTextView.text = "v${BuildConfig.VERSION_NAME}"
+    updateRowView.setOnClickListener {
       checkForUpdates()
     }
   }
 
   private fun checkForUpdates() {
     updateStatusTextView.text = "正在检查…"
-    updateStatusTextView.setOnClickListener(null)
+    updateRowView.isClickable = false
     executor.execute {
       val apiUrl = "https://api.github.com/repos/lovexlc/ai-dca-andriod/releases/latest"
       val releasesUrl = "https://github.com/lovexlc/ai-dca-andriod/releases/latest"
@@ -230,24 +231,27 @@ class MainActivity : Activity() {
         val latest = (tag.ifBlank { latestName }).ifBlank { "latest" }
         val current = BuildConfig.VERSION_NAME.trim()
         if (latest == "latest" || latest == current) {
-          resultText = getString(R.string.update_latest) + "（$current）"
+          resultText = "v$current · 已是最新"
         } else {
-          resultText = getString(R.string.update_available) + "：$latest（当前 $current）"
+          resultText = "发现新版本 $latest"
           openUrl = releasesUrl
         }
       } catch (e: Exception) {
-        resultText = "检查失败：${e.message ?: "未知错误"}"
+        resultText = "检查失败·点此重试"
         openUrl = releasesUrl
       }
 
       mainHandler.post {
         updateStatusTextView.text = resultText
+        updateRowView.isClickable = true
         if (openUrl != null) {
-          updateStatusTextView.setOnClickListener {
+          updateRowView.setOnClickListener {
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(openUrl)))
           }
         } else {
-          updateStatusTextView.setOnClickListener(null)
+          updateRowView.setOnClickListener {
+            checkForUpdates()
+          }
         }
       }
     }

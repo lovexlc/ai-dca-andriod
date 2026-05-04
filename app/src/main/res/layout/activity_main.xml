@@ -317,51 +317,56 @@
             android:textAllCaps="false"
             android:textSize="12sp" />
         </LinearLayout>
-      </LinearLayout>
 
-      <LinearLayout
-        android:id="@+id/updateCardView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:background="@drawable/card_surface"
-        android:elevation="1dp"
-        android:orientation="vertical"
-        android:padding="20dp">
+        <View
+          android:layout_width="match_parent"
+          android:layout_height="1dp"
+          android:layout_marginTop="20dp"
+          android:background="@color/slate_200" />
 
-        <TextView
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content"
-          android:text="@string/update_label"
-          android:textColor="@color/slate_500"
-          android:textSize="12sp"
-          android:textStyle="bold" />
-
-        <TextView
-          android:id="@+id/updateStatusTextView"
+        <LinearLayout
+          android:id="@+id/updateRowView"
           android:layout_width="match_parent"
           android:layout_height="wrap_content"
-          android:layout_marginTop="12dp"
-          android:textColor="@color/tab_text_color"
-          android:textSize="16sp"
-          android:textStyle="bold" />
-
-        <Button
-          android:id="@+id/checkUpdateButton"
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content"
-          android:layout_marginTop="12dp"
-          android:minHeight="0dp"
-          android:minWidth="0dp"
-          android:paddingLeft="14dp"
+          android:layout_marginTop="4dp"
+          android:background="?android:attr/selectableItemBackground"
+          android:clickable="true"
+          android:focusable="true"
+          android:gravity="center_vertical"
+          android:minHeight="48dp"
+          android:orientation="horizontal"
           android:paddingTop="10dp"
-          android:paddingRight="14dp"
-          android:paddingBottom="10dp"
-          android:text="@string/update_action_check"
-          android:textAllCaps="false"
-          android:textSize="12sp" />
-      </LinearLayout>
+          android:paddingBottom="10dp">
 
+          <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/update_label"
+            android:textColor="@color/tab_text_color"
+            android:textSize="15sp" />
+
+          <TextView
+            android:id="@+id/updateStatusTextView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="12dp"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:gravity="end"
+            android:singleLine="true"
+            android:textColor="@color/slate_500"
+            android:textSize="14sp" />
+
+          <TextView
+            android:id="@+id/updateChevronTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="6dp"
+            android:text="›"
+            android:textColor="@color/slate_400"
+            android:textSize="18sp" />
+        </LinearLayout>
+      </LinearLayout>
 
       <LinearLayout
         android:id="@+id/historySection"
