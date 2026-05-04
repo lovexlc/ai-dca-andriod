@@ -567,11 +567,8 @@
         android:id="@+id/historySection"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="14dp"
-        android:background="@drawable/card_surface"
-        android:elevation="1dp"
+        android:layout_marginTop="6dp"
         android:orientation="vertical"
-        android:padding="20dp"
         android:visibility="gone">
 
         <LinearLayout
@@ -600,20 +597,12 @@
             android:src="@drawable/ic_trash" />
         </LinearLayout>
 
-        <ScrollView
-          android:id="@+id/messageHistoryScrollView"
+        <LinearLayout
+          android:id="@+id/messageHistoryContainer"
           android:layout_width="match_parent"
-          android:layout_height="560dp"
-          android:layout_marginTop="14dp"
-          android:overScrollMode="ifContentScrolls"
-          android:scrollbars="vertical">
-
-          <LinearLayout
-            android:id="@+id/messageHistoryContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical" />
-        </ScrollView>
+          android:layout_height="wrap_content"
+          android:layout_marginTop="10dp"
+          android:orientation="vertical" />
       </LinearLayout>
 
     </LinearLayout>

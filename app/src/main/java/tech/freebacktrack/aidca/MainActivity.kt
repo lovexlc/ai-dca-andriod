@@ -57,7 +57,6 @@ class MainActivity : Activity() {
   private lateinit var historySection: LinearLayout
   private lateinit var settingsSection: LinearLayout
   private lateinit var messageHistoryContainer: LinearLayout
-  private lateinit var messageHistoryScrollView: ScrollView
   private lateinit var debugCardView: LinearLayout
   private lateinit var debugLogTextView: TextView
   private lateinit var copyDebugLogsButton: Button
@@ -76,7 +75,6 @@ class MainActivity : Activity() {
     setContentView(R.layout.activity_main)
     bindViews()
     applyWindowInsets()
-    setupMessageHistoryScroll()
     setupDebugToggle()
     setupDeviceIdentityActions()
     setupTokenActions()
@@ -149,7 +147,6 @@ class MainActivity : Activity() {
     historySection = findViewById(R.id.historySection)
     settingsSection = findViewById(R.id.settingsSection)
     messageHistoryContainer = findViewById(R.id.messageHistoryContainer)
-    messageHistoryScrollView = findViewById(R.id.messageHistoryScrollView)
     debugCardView = findViewById(R.id.debugCardView)
     debugLogTextView = findViewById(R.id.debugLogTextView)
     copyDebugLogsButton = findViewById(R.id.copyDebugLogsButton)
@@ -158,14 +155,6 @@ class MainActivity : Activity() {
     deviceInfoToggleHeader = findViewById(R.id.deviceInfoToggleHeader)
     deviceInfoToggleChevron = findViewById(R.id.deviceInfoToggleChevron)
     deviceAdvancedContainer = findViewById(R.id.deviceAdvancedContainer)
-  }
-
-  // 内层消息列表 ScrollView 与外层页面 ScrollView 嵌套，拉动时需要阻止父级拦截，否则手势会被外层截走。
-  private fun setupMessageHistoryScroll() {
-    messageHistoryScrollView.setOnTouchListener { view, _ ->
-      view.parent?.requestDisallowInterceptTouchEvent(true)
-      false
-    }
   }
 
   // targetSdk 35 强制 edge-to-edge 时，状态栏会覆盖内容；用 WindowInsets 显式吸收 systemBars
