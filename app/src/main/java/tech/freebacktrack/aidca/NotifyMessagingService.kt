@@ -30,7 +30,7 @@ class NotifyMessagingService : FirebaseMessagingService() {
     val body = message.data["body"]
       ?: message.data["message"]
       ?: message.notification?.body
-      ?: "收到一条新的 AI DCA 推送消息。"
+      ?: "收到一条新的定投通知。"
     val bodyMd = message.data["body_md"].orEmpty()
     val messageId = message.messageId.orEmpty()
     val eventId = message.data["eventId"].orEmpty()
