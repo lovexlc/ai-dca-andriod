@@ -10,319 +10,426 @@
     android:layout_width="match_parent"
     android:layout_height="0dp"
     android:layout_weight="1"
-    android:fillViewport="true">
+    android:fillViewport="true"
+    android:scrollbars="none">
 
     <LinearLayout
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
       android:orientation="vertical"
-      android:padding="24dp">
+      android:paddingLeft="20dp"
+      android:paddingRight="20dp"
+      android:paddingTop="12dp"
+      android:paddingBottom="100dp">
 
-      <TextView
-        android:id="@+id/titleTextView"
+      <!-- ============ Top header bar ============ -->
+      <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="@string/app_name"
-        android:textColor="@color/tab_text_color"
-        android:textSize="28sp"
-        android:textStyle="bold" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingTop="6dp"
+        android:paddingBottom="4dp">
 
+        <ImageView
+          android:layout_width="28dp"
+          android:layout_height="28dp"
+          android:layout_marginRight="10dp"
+          android:src="@drawable/ic_app_logo"
+          android:contentDescription="@string/app_name" />
+
+        <TextView
+          android:id="@+id/titleTextView"
+          android:layout_width="0dp"
+          android:layout_height="wrap_content"
+          android:layout_weight="1"
+          android:text="@string/app_name"
+          android:textColor="@color/text_primary"
+          android:textSize="20sp"
+          android:textStyle="bold"
+          android:singleLine="true"
+          android:ellipsize="end" />
+
+        <ImageView
+          android:layout_width="8dp"
+          android:layout_height="8dp"
+          android:layout_marginRight="6dp"
+          android:src="@drawable/dot_online"
+          android:contentDescription="@string/online_label" />
+
+        <TextView
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/online_label"
+          android:textColor="@color/text_secondary"
+          android:textSize="12sp" />
+      </LinearLayout>
+
+      <!-- ============ SERVER (状态) SECTION ============ -->
       <LinearLayout
         android:id="@+id/serverSection"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-      <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:background="@drawable/card_surface"
-        android:elevation="1dp"
-        android:orientation="vertical"
-        android:padding="20dp">
-
-        <TextView
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content"
-          android:text="@string/status_label"
-          android:textColor="@color/slate_500"
-          android:textSize="12sp"
-          android:textStyle="bold" />
-
-        <TextView
-          android:id="@+id/statusBadgeTextView"
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content"
-          android:layout_marginTop="12dp"
-          android:background="@drawable/status_badge_idle"
-          android:paddingLeft="12dp"
-          android:paddingTop="6dp"
-          android:paddingRight="12dp"
-          android:paddingBottom="6dp"
-          android:text="@string/status_idle"
-          android:textColor="@color/slate_700"
-          android:textSize="12sp"
-          android:textStyle="bold" />
-
-        <TextView
-          android:id="@+id/statusTitleTextView"
-          android:layout_width="match_parent"
-          android:layout_height="wrap_content"
-          android:layout_marginTop="14dp"
-          android:textColor="@color/tab_text_color"
-          android:textSize="22sp"
-          android:textStyle="bold" />
-
-        <TextView
-          android:id="@+id/statusDetailTextView"
-          android:layout_width="match_parent"
-          android:layout_height="wrap_content"
-          android:layout_marginTop="10dp"
-          android:lineSpacingExtra="3dp"
-          android:textColor="@color/slate_600"
-          android:textSize="15sp" />
-
-        <TextView
-          android:id="@+id/statusUpdatedAtTextView"
-          android:layout_width="match_parent"
-          android:layout_height="wrap_content"
-          android:layout_marginTop="14dp"
-          android:textColor="@color/slate_400"
-          android:textSize="12sp" />
-      </LinearLayout>
-
-      <LinearLayout
-        android:id="@+id/pairingCardView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:background="@drawable/card_surface"
-        android:elevation="1dp"
-        android:orientation="vertical"
-        android:padding="20dp">
-
-        <TextView
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content"
-          android:text="@string/pairing_label"
-          android:textColor="@color/slate_500"
-          android:textSize="12sp"
-          android:textStyle="bold" />
-
-        <TextView
-          android:id="@+id/pairingStatusTextView"
-          android:layout_width="match_parent"
-          android:layout_height="wrap_content"
-          android:layout_marginTop="14dp"
-          android:textColor="@color/tab_text_color"
-          android:textSize="16sp"
-          android:textStyle="bold" />
-
-        <TextView
-          android:id="@+id/pairingCodeTextView"
-          android:layout_width="match_parent"
-          android:layout_height="wrap_content"
-          android:layout_marginTop="12dp"
-          android:background="@drawable/token_surface"
-          android:fontFamily="monospace"
-          android:padding="14dp"
-          android:textColor="@color/slate_700"
-          android:textSize="20sp"
-          android:textStyle="bold" />
-
-        <TextView
-          android:id="@+id/pairingDetailTextView"
-          android:layout_width="match_parent"
-          android:layout_height="wrap_content"
-          android:layout_marginTop="12dp"
-          android:lineSpacingExtra="3dp"
-          android:textColor="@color/slate_600"
-          android:textSize="14sp" />
-
+        <!-- Hero status card -->
         <LinearLayout
-          android:id="@+id/pairedClientContainerView"
           android:layout_width="match_parent"
           android:layout_height="wrap_content"
-          android:layout_marginTop="14dp"
+          android:layout_marginTop="18dp"
+          android:background="@drawable/card_hero_gradient"
+          android:elevation="2dp"
           android:orientation="vertical"
-          android:visibility="gone">
+          android:padding="24dp">
 
-          <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/paired_browser_label"
-            android:textColor="@color/slate_500"
-            android:textSize="12sp"
-            android:textStyle="bold" />
-
-          <ScrollView
+          <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="180dp"
-            android:layout_marginTop="8dp"
-            android:overScrollMode="ifContentScrolls"
-            android:scrollbars="vertical">
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
             <TextView
-              android:id="@+id/pairedClientTextView"
-              android:layout_width="match_parent"
+              android:id="@+id/statusBadgeTextView"
+              android:layout_width="wrap_content"
               android:layout_height="wrap_content"
-              android:background="@drawable/token_surface"
-              android:fontFamily="monospace"
-              android:lineSpacingExtra="3dp"
-              android:padding="14dp"
-              android:textColor="@color/slate_700"
-              android:textIsSelectable="true"
-              android:textSize="13sp" />
-          </ScrollView>
+              android:background="@drawable/status_badge_idle"
+              android:paddingLeft="12dp"
+              android:paddingTop="6dp"
+              android:paddingRight="12dp"
+              android:paddingBottom="6dp"
+              android:text="@string/status_idle"
+              android:textColor="@color/text_on_hero"
+              android:textSize="11sp"
+              android:textStyle="bold"
+              android:letterSpacing="0.06" />
+
+            <View
+              android:layout_width="0dp"
+              android:layout_height="1dp"
+              android:layout_weight="1" />
+
+            <TextView
+              android:id="@+id/statusUpdatedAtTextView"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:textColor="@color/text_on_hero_muted"
+              android:textSize="11sp" />
+          </LinearLayout>
+
+          <TextView
+            android:id="@+id/statusTitleTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:textColor="@color/text_on_hero"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:lineSpacingExtra="2dp" />
+
+          <TextView
+            android:id="@+id/statusDetailTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:lineSpacingExtra="3dp"
+            android:textColor="@color/text_on_hero_muted"
+            android:textSize="14sp" />
+        </LinearLayout>
+
+        <!-- Pairing card -->
+        <LinearLayout
+          android:id="@+id/pairingCardView"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:layout_marginTop="14dp"
+          android:background="@drawable/card_surface"
+          android:orientation="vertical"
+          android:padding="22dp">
+
+          <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:text="@string/pairing_label"
+              android:textColor="@color/text_tertiary"
+              android:textSize="11sp"
+              android:textStyle="bold"
+              android:letterSpacing="0.08" />
+
+            <View
+              android:layout_width="0dp"
+              android:layout_height="1dp"
+              android:layout_weight="1" />
+
+            <TextView
+              android:id="@+id/pairingStatusTextView"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:textColor="@color/text_secondary"
+              android:textSize="12sp"
+              android:singleLine="true"
+              android:ellipsize="end" />
+          </LinearLayout>
+
+          <TextView
+            android:id="@+id/pairingCodeTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:background="@drawable/token_surface"
+            android:fontFamily="monospace"
+            android:gravity="center"
+            android:letterSpacing="0.18"
+            android:paddingTop="20dp"
+            android:paddingBottom="20dp"
+            android:text="--------"
+            android:textColor="@color/text_primary"
+            android:textSize="34sp"
+            android:textStyle="bold" />
+
+          <TextView
+            android:id="@+id/pairingDetailTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:lineSpacingExtra="3dp"
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp" />
+
+          <LinearLayout
+            android:id="@+id/pairedClientContainerView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:text="@string/paired_browser_label"
+              android:textColor="@color/text_tertiary"
+              android:textSize="11sp"
+              android:textStyle="bold"
+              android:letterSpacing="0.08" />
+
+            <ScrollView
+              android:layout_width="match_parent"
+              android:layout_height="160dp"
+              android:layout_marginTop="8dp"
+              android:overScrollMode="ifContentScrolls"
+              android:scrollbars="vertical">
+
+              <TextView
+                android:id="@+id/pairedClientTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/token_surface"
+                android:fontFamily="monospace"
+                android:lineSpacingExtra="3dp"
+                android:padding="14dp"
+                android:textColor="@color/text_secondary"
+                android:textIsSelectable="true"
+                android:textSize="12sp" />
+            </ScrollView>
+          </LinearLayout>
         </LinearLayout>
       </LinearLayout>
 
-      </LinearLayout>
-
+      <!-- ============ SETTINGS (设备) SECTION ============ -->
       <LinearLayout
         android:id="@+id/settingsSection"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="14dp"
         android:background="@drawable/card_surface"
-        android:elevation="1dp"
         android:orientation="vertical"
         android:padding="20dp">
 
-        <TextView
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content"
-          android:text="@string/device_info_label"
-          android:textColor="@color/slate_500"
-          android:textSize="12sp"
-          android:textStyle="bold" />
-
-        <TextView
-          android:id="@+id/deviceNameTextView"
-          android:layout_width="match_parent"
-          android:layout_height="wrap_content"
-          android:layout_marginTop="14dp"
-          android:textColor="@color/tab_text_color"
-          android:textSize="16sp"
-          android:textStyle="bold" />
-
-        <TextView
-          android:id="@+id/projectIdTextView"
-          android:layout_width="match_parent"
-          android:layout_height="wrap_content"
-          android:layout_marginTop="10dp"
-          android:textColor="@color/slate_600"
-          android:textSize="14sp" />
-
-        <TextView
-          android:id="@+id/packageNameTextView"
-          android:layout_width="match_parent"
-          android:layout_height="wrap_content"
-          android:layout_marginTop="6dp"
-          android:textColor="@color/slate_600"
-          android:textSize="14sp" />
-
-        <TextView
-          android:id="@+id/senderIdTextView"
-          android:layout_width="match_parent"
-          android:layout_height="wrap_content"
-          android:layout_marginTop="6dp"
-          android:textColor="@color/slate_600"
-          android:textSize="14sp" />
-
-        <TextView
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content"
-          android:layout_marginTop="14dp"
-          android:text="@string/device_installation_id_label"
-          android:textColor="@color/slate_500"
-          android:textSize="12sp"
-          android:textStyle="bold" />
-
         <LinearLayout
+          android:id="@+id/deviceInfoToggleHeader"
           android:layout_width="match_parent"
           android:layout_height="wrap_content"
-          android:layout_marginTop="8dp"
+          android:background="?android:attr/selectableItemBackground"
+          android:clickable="true"
+          android:focusable="true"
           android:gravity="center_vertical"
+          android:minHeight="44dp"
           android:orientation="horizontal">
 
-          <TextView
-            android:id="@+id/deviceInstallationIdTextView"
+          <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:background="@drawable/token_surface"
-            android:fontFamily="monospace"
-            android:padding="14dp"
-            android:textColor="@color/slate_700"
-            android:textSize="12sp" />
+            android:orientation="vertical">
 
-          <Button
-            android:id="@+id/copyDeviceInstallationIdButton"
+            <TextView
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:text="@string/device_info_label"
+              android:textColor="@color/text_tertiary"
+              android:textSize="11sp"
+              android:textStyle="bold"
+              android:letterSpacing="0.08" />
+
+            <TextView
+              android:id="@+id/deviceNameTextView"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:layout_marginTop="6dp"
+              android:textColor="@color/text_primary"
+              android:textSize="17sp"
+              android:textStyle="bold" />
+          </LinearLayout>
+
+          <TextView
+            android:id="@+id/deviceInfoToggleChevron"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="10dp"
-            android:minHeight="0dp"
-            android:minWidth="0dp"
-            android:paddingLeft="12dp"
-            android:paddingTop="8dp"
-            android:paddingRight="12dp"
-            android:paddingBottom="8dp"
-            android:text="@string/action_copy_device_id"
-            android:textAllCaps="false"
-            android:textSize="12sp" />
+            android:layout_marginLeft="12dp"
+            android:text="›"
+            android:textColor="@color/text_tertiary"
+            android:textSize="22sp" />
         </LinearLayout>
 
-        <TextView
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content"
-          android:layout_marginTop="14dp"
-          android:text="@string/token_label"
-          android:textColor="@color/slate_500"
-          android:textSize="12sp"
-          android:textStyle="bold" />
-
         <LinearLayout
+          android:id="@+id/deviceAdvancedContainer"
           android:layout_width="match_parent"
           android:layout_height="wrap_content"
-          android:layout_marginTop="8dp"
-          android:gravity="center_vertical"
-          android:orientation="horizontal">
+          android:orientation="vertical"
+          android:visibility="gone">
 
           <TextView
-            android:id="@+id/tokenTextView"
-            android:layout_width="0dp"
+            android:id="@+id/projectIdTextView"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:background="@drawable/token_surface"
-            android:fontFamily="monospace"
-            android:padding="14dp"
-            android:textColor="@color/slate_700"
-            android:textSize="12sp" />
+            android:layout_marginTop="14dp"
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp" />
 
-          <Button
-            android:id="@+id/copyTokenButton"
+          <TextView
+            android:id="@+id/packageNameTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp" />
+
+          <TextView
+            android:id="@+id/senderIdTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp" />
+
+          <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="10dp"
-            android:minHeight="0dp"
-            android:minWidth="0dp"
-            android:paddingLeft="12dp"
-            android:paddingTop="8dp"
-            android:paddingRight="12dp"
-            android:paddingBottom="8dp"
-            android:text="@string/action_copy_token"
-            android:textAllCaps="false"
-            android:textSize="12sp" />
+            android:layout_marginTop="18dp"
+            android:text="@string/device_installation_id_label"
+            android:textColor="@color/text_tertiary"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.08" />
+
+          <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+              android:id="@+id/deviceInstallationIdTextView"
+              android:layout_width="0dp"
+              android:layout_height="wrap_content"
+              android:layout_weight="1"
+              android:background="@drawable/token_surface"
+              android:fontFamily="monospace"
+              android:padding="12dp"
+              android:textColor="@color/text_secondary"
+              android:textSize="12sp" />
+
+            <Button
+              android:id="@+id/copyDeviceInstallationIdButton"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:layout_marginLeft="10dp"
+              android:background="@drawable/btn_text_primary"
+              android:minHeight="0dp"
+              android:minWidth="0dp"
+              android:paddingLeft="14dp"
+              android:paddingTop="10dp"
+              android:paddingRight="14dp"
+              android:paddingBottom="10dp"
+              android:stateListAnimator="@null"
+              android:text="@string/action_copy"
+              android:textAllCaps="false"
+              android:textColor="@color/brand_600"
+              android:textSize="12sp"
+              android:textStyle="bold" />
+          </LinearLayout>
+
+          <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="@string/token_label"
+            android:textColor="@color/text_tertiary"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.08" />
+
+          <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+              android:id="@+id/tokenTextView"
+              android:layout_width="0dp"
+              android:layout_height="wrap_content"
+              android:layout_weight="1"
+              android:background="@drawable/token_surface"
+              android:fontFamily="monospace"
+              android:padding="12dp"
+              android:textColor="@color/text_secondary"
+              android:textSize="12sp" />
+
+            <Button
+              android:id="@+id/copyTokenButton"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:layout_marginLeft="10dp"
+              android:background="@drawable/btn_text_primary"
+              android:minHeight="0dp"
+              android:minWidth="0dp"
+              android:paddingLeft="14dp"
+              android:paddingTop="10dp"
+              android:paddingRight="14dp"
+              android:paddingBottom="10dp"
+              android:stateListAnimator="@null"
+              android:text="@string/action_copy"
+              android:textAllCaps="false"
+              android:textColor="@color/brand_600"
+              android:textSize="12sp"
+              android:textStyle="bold" />
+          </LinearLayout>
         </LinearLayout>
 
         <View
           android:layout_width="match_parent"
           android:layout_height="1dp"
-          android:layout_marginTop="20dp"
-          android:background="@color/slate_200" />
+          android:layout_marginTop="18dp"
+          android:background="@color/divider_subtle" />
 
         <LinearLayout
           android:id="@+id/updateRowView"
@@ -342,7 +449,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/update_label"
-            android:textColor="@color/tab_text_color"
+            android:textColor="@color/text_primary"
             android:textSize="15sp" />
 
           <TextView
@@ -354,8 +461,8 @@
             android:ellipsize="end"
             android:gravity="end"
             android:singleLine="true"
-            android:textColor="@color/slate_500"
-            android:textSize="14sp" />
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp" />
 
           <TextView
             android:id="@+id/updateChevronTextView"
@@ -363,36 +470,114 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="6dp"
             android:text="›"
-            android:textColor="@color/slate_400"
-            android:textSize="18sp" />
+            android:textColor="@color/text_tertiary"
+            android:textSize="20sp" />
         </LinearLayout>
+
+        <!-- Debug card lives inside settings, only visible when debug mode is on. -->
+        <LinearLayout
+          android:id="@+id/debugCardView"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:layout_marginTop="12dp"
+          android:background="@drawable/token_surface"
+          android:orientation="vertical"
+          android:padding="16dp"
+          android:visibility="gone">
+
+          <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+              android:layout_width="0dp"
+              android:layout_height="wrap_content"
+              android:layout_weight="1"
+              android:text="@string/debug_label"
+              android:textColor="@color/text_primary"
+              android:textSize="13sp"
+              android:textStyle="bold" />
+
+            <Button
+              android:id="@+id/copyDebugLogsButton"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:layout_marginRight="6dp"
+              android:background="@drawable/btn_text_primary"
+              android:minHeight="0dp"
+              android:minWidth="0dp"
+              android:paddingLeft="12dp"
+              android:paddingTop="8dp"
+              android:paddingRight="12dp"
+              android:paddingBottom="8dp"
+              android:stateListAnimator="@null"
+              android:text="@string/debug_action_copy"
+              android:textAllCaps="false"
+              android:textColor="@color/brand_600"
+              android:textSize="11sp"
+              android:textStyle="bold" />
+
+            <Button
+              android:id="@+id/clearDebugLogsButton"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:background="@drawable/btn_text_primary"
+              android:minHeight="0dp"
+              android:minWidth="0dp"
+              android:paddingLeft="12dp"
+              android:paddingTop="8dp"
+              android:paddingRight="12dp"
+              android:paddingBottom="8dp"
+              android:stateListAnimator="@null"
+              android:text="@string/debug_action_clear"
+              android:textAllCaps="false"
+              android:textColor="@color/brand_600"
+              android:textSize="11sp"
+              android:textStyle="bold" />
+          </LinearLayout>
+
+          <TextView
+            android:id="@+id/debugLogTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:fontFamily="monospace"
+            android:lineSpacingExtra="3dp"
+            android:textColor="@color/text_secondary"
+            android:textIsSelectable="true"
+            android:textSize="11sp" />
+        </LinearLayout>
+
       </LinearLayout>
 
+      <!-- ============ HISTORY (消息) SECTION ============ -->
       <LinearLayout
         android:id="@+id/historySection"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="14dp"
         android:background="@drawable/card_surface"
-        android:elevation="1dp"
         android:orientation="vertical"
-        android:padding="20dp">
+        android:padding="20dp"
+        android:visibility="gone">
 
         <TextView
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
           android:text="@string/message_history_label"
-          android:textColor="@color/slate_500"
-          android:textSize="12sp"
+          android:textColor="@color/text_primary"
+          android:textSize="18sp"
           android:textStyle="bold" />
 
         <ScrollView
           android:id="@+id/messageHistoryScrollView"
           android:layout_width="match_parent"
-          android:layout_height="360dp"
+          android:layout_height="560dp"
           android:layout_marginTop="14dp"
-          android:scrollbars="vertical"
-          android:overScrollMode="ifContentScrolls">
+          android:overScrollMode="ifContentScrolls"
+          android:scrollbars="vertical">
 
           <LinearLayout
             android:id="@+id/messageHistoryContainer"
@@ -402,170 +587,127 @@
         </ScrollView>
       </LinearLayout>
 
-      <LinearLayout
-        android:id="@+id/debugCardView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:background="@drawable/card_surface"
-        android:elevation="1dp"
-        android:orientation="vertical"
-        android:padding="20dp"
-        android:visibility="gone">
-
-        <LinearLayout
-          android:layout_width="match_parent"
-          android:layout_height="wrap_content"
-          android:gravity="center_vertical"
-          android:orientation="horizontal">
-
-          <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/debug_label"
-            android:textColor="@color/slate_500"
-            android:textSize="12sp"
-            android:textStyle="bold" />
-
-          <Button
-            android:id="@+id/copyDebugLogsButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginRight="8dp"
-            android:minHeight="0dp"
-            android:minWidth="0dp"
-            android:paddingLeft="12dp"
-            android:paddingTop="8dp"
-            android:paddingRight="12dp"
-            android:paddingBottom="8dp"
-            android:text="@string/debug_action_copy"
-            android:textAllCaps="false"
-            android:textSize="12sp" />
-
-          <Button
-            android:id="@+id/clearDebugLogsButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:minHeight="0dp"
-            android:minWidth="0dp"
-            android:paddingLeft="12dp"
-            android:paddingTop="8dp"
-            android:paddingRight="12dp"
-            android:paddingBottom="8dp"
-            android:text="@string/debug_action_clear"
-            android:textAllCaps="false"
-            android:textSize="12sp" />
-        </LinearLayout>
-
-        <TextView
-          android:id="@+id/debugLogTextView"
-          android:layout_width="match_parent"
-          android:layout_height="wrap_content"
-          android:layout_marginTop="14dp"
-          android:background="@drawable/token_surface"
-          android:fontFamily="monospace"
-          android:lineSpacingExtra="3dp"
-          android:padding="14dp"
-          android:textColor="@color/slate_700"
-          android:textIsSelectable="true"
-          android:textSize="12sp" />
-      </LinearLayout>
-
     </LinearLayout>
   </ScrollView>
 
-<LinearLayout
-    android:id="@+id/bottomNav"
+  <!-- ============ Floating bottom nav (capsule) ============ -->
+  <FrameLayout
     android:layout_width="match_parent"
-    android:layout_height="72dp"
-    android:background="@drawable/card_surface"
-    android:orientation="horizontal"
-    android:paddingLeft="12dp"
-    android:paddingRight="12dp"
-    android:gravity="center">
+    android:layout_height="wrap_content"
+    android:paddingLeft="20dp"
+    android:paddingRight="20dp"
+    android:paddingTop="6dp"
+    android:paddingBottom="14dp">
 
     <LinearLayout
-      android:id="@+id/navServerButton"
-      android:layout_width="0dp"
-      android:layout_height="match_parent"
-      android:layout_weight="1"
-      android:orientation="vertical"
+      android:id="@+id/bottomNav"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:background="@drawable/card_floating_nav"
+      android:elevation="6dp"
       android:gravity="center"
-      android:clickable="true"
-      android:focusable="true">
+      android:orientation="horizontal"
+      android:paddingLeft="6dp"
+      android:paddingRight="6dp"
+      android:paddingTop="6dp"
+      android:paddingBottom="6dp">
 
-      <ImageView
-        android:layout_width="22dp"
-        android:layout_height="22dp"
-        android:src="@drawable/ic_nav_server"
-        android:tint="@color/bottom_nav_icon_tint"
-        android:duplicateParentState="true" />
-
-      <TextView
-        android:layout_width="wrap_content"
+      <LinearLayout
+        android:id="@+id/navServerButton"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:text="@string/nav_server"
-        android:textColor="@color/bottom_nav_text_color"
-        android:textSize="12sp"
-        android:duplicateParentState="true" />
-    </LinearLayout>
+        android:layout_weight="1"
+        android:background="@drawable/nav_pill_selector"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp">
 
-    <LinearLayout
-      android:id="@+id/navHistoryButton"
-      android:layout_width="0dp"
-      android:layout_height="match_parent"
-      android:layout_weight="1"
-      android:orientation="vertical"
-      android:gravity="center"
-      android:clickable="true"
-      android:focusable="true">
+        <ImageView
+          android:layout_width="22dp"
+          android:layout_height="22dp"
+          android:src="@drawable/ic_nav_server"
+          android:tint="@color/bottom_nav_icon_tint"
+          android:contentDescription="@string/nav_server"
+          android:duplicateParentState="true" />
 
-      <ImageView
-        android:layout_width="22dp"
-        android:layout_height="22dp"
-        android:src="@drawable/ic_nav_history"
-        android:tint="@color/bottom_nav_icon_tint"
-        android:duplicateParentState="true" />
+        <TextView
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_marginTop="4dp"
+          android:text="@string/nav_server"
+          android:textColor="@color/bottom_nav_text_color"
+          android:textSize="11sp"
+          android:textStyle="bold"
+          android:duplicateParentState="true" />
+      </LinearLayout>
 
-      <TextView
-        android:layout_width="wrap_content"
+      <LinearLayout
+        android:id="@+id/navHistoryButton"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:text="@string/nav_history"
-        android:textColor="@color/bottom_nav_text_color"
-        android:textSize="12sp"
-        android:duplicateParentState="true" />
-    </LinearLayout>
+        android:layout_weight="1"
+        android:background="@drawable/nav_pill_selector"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp">
 
-    <LinearLayout
-      android:id="@+id/navSettingsButton"
-      android:layout_width="0dp"
-      android:layout_height="match_parent"
-      android:layout_weight="1"
-      android:orientation="vertical"
-      android:gravity="center"
-      android:clickable="true"
-      android:focusable="true">
+        <ImageView
+          android:layout_width="22dp"
+          android:layout_height="22dp"
+          android:src="@drawable/ic_nav_history"
+          android:tint="@color/bottom_nav_icon_tint"
+          android:contentDescription="@string/nav_history"
+          android:duplicateParentState="true" />
 
-      <ImageView
-        android:layout_width="22dp"
-        android:layout_height="22dp"
-        android:src="@drawable/ic_nav_settings"
-        android:tint="@color/bottom_nav_icon_tint"
-        android:duplicateParentState="true" />
+        <TextView
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_marginTop="4dp"
+          android:text="@string/nav_history"
+          android:textColor="@color/bottom_nav_text_color"
+          android:textSize="11sp"
+          android:textStyle="bold"
+          android:duplicateParentState="true" />
+      </LinearLayout>
 
-      <TextView
-        android:layout_width="wrap_content"
+      <LinearLayout
+        android:id="@+id/navSettingsButton"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:text="@string/nav_settings"
-        android:textColor="@color/bottom_nav_text_color"
-        android:textSize="12sp"
-        android:duplicateParentState="true" />
-    </LinearLayout>
+        android:layout_weight="1"
+        android:background="@drawable/nav_pill_selector"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp">
 
-  </LinearLayout>
+        <ImageView
+          android:layout_width="22dp"
+          android:layout_height="22dp"
+          android:src="@drawable/ic_nav_settings"
+          android:tint="@color/bottom_nav_icon_tint"
+          android:contentDescription="@string/nav_settings"
+          android:duplicateParentState="true" />
+
+        <TextView
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_marginTop="4dp"
+          android:text="@string/nav_settings"
+          android:textColor="@color/bottom_nav_text_color"
+          android:textSize="11sp"
+          android:textStyle="bold"
+          android:duplicateParentState="true" />
+      </LinearLayout>
+    </LinearLayout>
+  </FrameLayout>
 
 </LinearLayout>

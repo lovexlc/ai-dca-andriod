@@ -58,6 +58,9 @@ class MainActivity : Activity() {
   private lateinit var debugLogTextView: TextView
   private lateinit var copyDebugLogsButton: Button
   private lateinit var clearDebugLogsButton: Button
+  private lateinit var deviceInfoToggleHeader: LinearLayout
+  private lateinit var deviceInfoToggleChevron: TextView
+  private lateinit var deviceAdvancedContainer: LinearLayout
   private var titleTapCount = 0
   private var lastTitleTapAtMs = 0L
   private val executor = Executors.newSingleThreadExecutor()
@@ -75,6 +78,7 @@ class MainActivity : Activity() {
     setupUpdateActions()
     setupBottomNavigation()
     setupDebugActions()
+    setupDeviceAdvancedToggle()
     DebugLogStore.append(applicationContext, "ui", "MainActivity onCreate")
 
     val identity = RegistrationRepository.currentIdentity(this)
@@ -143,6 +147,9 @@ class MainActivity : Activity() {
     debugLogTextView = findViewById(R.id.debugLogTextView)
     copyDebugLogsButton = findViewById(R.id.copyDebugLogsButton)
     clearDebugLogsButton = findViewById(R.id.clearDebugLogsButton)
+    deviceInfoToggleHeader = findViewById(R.id.deviceInfoToggleHeader)
+    deviceInfoToggleChevron = findViewById(R.id.deviceInfoToggleChevron)
+    deviceAdvancedContainer = findViewById(R.id.deviceAdvancedContainer)
   }
 
   // 内层消息列表 ScrollView 与外层页面 ScrollView 嵌套，拉动时需要阻止父级拦截，否则手势会被外层截走。
@@ -390,10 +397,10 @@ class MainActivity : Activity() {
 
   private fun renderSnapshot(snapshot: RegistrationSnapshot) {
     val badge = when (snapshot.state) {
-      "validated", "connected" -> BadgeStyle("已校验", R.drawable.status_badge_connected, R.color.emerald_600)
-      "registered" -> BadgeStyle("已注册", R.drawable.status_badge_registered, R.color.amber_700)
-      "error" -> BadgeStyle("失败", R.drawable.status_badge_error, R.color.red_600)
-      else -> BadgeStyle(getString(R.string.status_idle), R.drawable.status_badge_idle, R.color.slate_700)
+      "validated", "connected" -> BadgeStyle("已校验", R.drawable.status_badge_connected, R.color.text_on_hero)
+      "registered" -> BadgeStyle("已注册", R.drawable.status_badge_registered, R.color.text_on_hero)
+      "error" -> BadgeStyle("失败", R.drawable.status_badge_error, R.color.text_on_hero)
+      else -> BadgeStyle(getString(R.string.status_idle), R.drawable.status_badge_idle, R.color.text_on_hero_muted)
     }
 
     statusBadgeTextView.text = badge.label
@@ -450,6 +457,16 @@ class MainActivity : Activity() {
       val bodyView = itemView.findViewById<TextView>(R.id.messageBodyTextView)
       val detailView = itemView.findViewById<TextView>(R.id.messageDetailTextView)
       val openDetailButton = itemView.findViewById<Button>(R.id.openMessageDetailButton)
+      val headerRow = itemView.findViewById<LinearLayout>(R.id.messageHeaderRow)
+      val expandChevron = itemView.findViewById<TextView>(R.id.messageExpandChevron)
+      val detailContainer = itemView.findViewById<LinearLayout>(R.id.messageDetailContainer)
+      detailContainer.visibility = View.GONE
+      expandChevron.rotation = 0f
+      headerRow.setOnClickListener {
+        val expanded = detailContainer.visibility != View.VISIBLE
+        detailContainer.visibility = if (expanded) View.VISIBLE else View.GONE
+        expandChevron.rotation = if (expanded) 90f else 0f
+      }
 
       titleView.text = record.title.ifBlank { getString(R.string.incoming_message_fallback_title) }
       metaView.text = buildString {
@@ -552,6 +569,18 @@ class MainActivity : Activity() {
 
     DebugLogStore.append(applicationContext, "permission", "Requesting POST_NOTIFICATIONS")
     requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), REQUEST_NOTIFICATIONS)
+  }
+
+  private fun setupDeviceAdvancedToggle() {
+    fun applyState(expanded: Boolean) {
+      deviceAdvancedContainer.visibility = if (expanded) View.VISIBLE else View.GONE
+      deviceInfoToggleChevron.rotation = if (expanded) 90f else 0f
+    }
+    applyState(false)
+    deviceInfoToggleHeader.setOnClickListener {
+      val expanded = deviceAdvancedContainer.visibility != View.VISIBLE
+      applyState(expanded)
+    }
   }
 
   private data class BadgeStyle(
