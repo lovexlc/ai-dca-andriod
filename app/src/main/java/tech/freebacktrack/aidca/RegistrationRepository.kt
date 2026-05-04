@@ -61,6 +61,41 @@ object RegistrationRepository {
     return safeRegisterCurrentToken(context.applicationContext, null, trigger)
   }
 
+  fun unpairBrowser(context: Context, groupId: String, callback: (Boolean, String) -> Unit) {
+    unpairBrowser(context, groupId, "", callback)
+  }
+
+  fun unpairBrowser(context: Context, groupId: String, clientId: String, callback: (Boolean, String) -> Unit) {
+    val appContext = context.applicationContext
+    DebugLogStore.append(
+      appContext,
+      "pairing",
+      "Unpair browser requested, groupId=${groupId.ifBlank { "-" }}, clientId=${clientId.ifBlank { "-" }}"
+    )
+    executor.execute {
+      val errorMessage = try {
+        val identity = currentIdentity(appContext)
+        val token = fetchTokenBlocking(appContext)
+        val payload = JSONObject()
+          .put("deviceInstallationId", identity.deviceInstallationId)
+          .put("token", token)
+        if (groupId.isNotBlank()) {
+          payload.put("groupId", groupId)
+        }
+        if (clientId.isNotBlank()) {
+          payload.put("clientId", clientId)
+        }
+        postJson("${BuildConfig.NOTIFY_BASE_URL}/gcm/unpair-from-device", payload)
+        DebugLogStore.append(appContext, "pairing", "Unpair browser succeeded")
+        ""
+      } catch (error: Exception) {
+        DebugLogStore.append(appContext, "pairing", "Unpair browser failed: ${error.message ?: "未知错误"}")
+        error.message ?: "解绑失败"
+      }
+      mainHandler.post { callback(errorMessage.isBlank(), errorMessage) }
+    }
+  }
+
   private fun safeRegisterCurrentToken(
     context: Context,
     explicitToken: String?,
@@ -162,6 +197,7 @@ object RegistrationRepository {
         ?.optInt("pairedClientCount")
         ?: 0
       var pairedClientSummary = readPairedClientSummary(registerRegistration)
+      var pairedClientsJson = readPairedClientsJson(registerRegistration)
       val registeredCount = registerResponse.body.optJSONObject("setup")?.optInt("gcmRegistrationCount") ?: 0
       DebugLogStore.append(
         context,
@@ -189,6 +225,7 @@ object RegistrationRepository {
           ?.optInt("pairedClientCount")
           ?: pairedClientCount
         pairedClientSummary = readPairedClientSummary(checkRegistration).ifBlank { pairedClientSummary }
+        pairedClientsJson = readPairedClientsJson(checkRegistration).ifBlank { pairedClientsJson }
         val detail = checkResponse.body
           .optJSONObject("result")
           ?.optString("detail")
@@ -255,6 +292,11 @@ object RegistrationRepository {
       } else {
         ""
       }
+      val resolvedPairedClientsJson = if (pairingState.status == "paired") {
+        pairedClientsJson.ifBlank { previousSnapshot.pairedClientsJson }
+      } else {
+        ""
+      }
 
       val snapshot = RegistrationSnapshot(
         state = connectionState.state,
@@ -274,7 +316,8 @@ object RegistrationRepository {
         pairingCodeExpiresAt = pairingState.expiresAt,
         pairingStatus = pairingState.status,
         pairingDetail = pairingState.detail,
-        pairedClientSummary = resolvedPairedClientSummary
+        pairedClientSummary = resolvedPairedClientSummary,
+        pairedClientsJson = resolvedPairedClientsJson
       )
       RegistrationStateStore.write(context, snapshot)
       snapshot
@@ -452,10 +495,16 @@ object RegistrationRepository {
       pairingCodeExpiresAt = previousSnapshot.pairingCodeExpiresAt,
       pairingStatus = previousSnapshot.pairingStatus,
       pairingDetail = previousSnapshot.pairingDetail,
-      pairedClientSummary = previousSnapshot.pairedClientSummary
+      pairedClientSummary = previousSnapshot.pairedClientSummary,
+      pairedClientsJson = previousSnapshot.pairedClientsJson
     )
     RegistrationStateStore.write(context, snapshot)
     return snapshot
+  }
+
+  private fun readPairedClientsJson(registrationPayload: JSONObject?): String {
+    val pairedClients = registrationPayload?.optJSONArray("pairedClients") ?: return ""
+    return pairedClients.toString()
   }
 
   private fun readPairedClientSummary(registrationPayload: JSONObject?): String {

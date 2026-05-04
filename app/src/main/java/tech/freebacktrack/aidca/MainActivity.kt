@@ -1,6 +1,7 @@
 package tech.freebacktrack.aidca
 
 import android.Manifest
+import android.app.AlertDialog
 import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -15,11 +16,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowInsets
 import android.widget.Button
+import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import org.json.JSONObject
+import org.json.JSONArray
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.Executors
@@ -36,6 +39,7 @@ class MainActivity : Activity() {
   private lateinit var pairingDetailTextView: TextView
   private lateinit var pairedClientContainerView: LinearLayout
   private lateinit var pairedClientTextView: TextView
+  private lateinit var pairedClientItemsContainer: LinearLayout
   private lateinit var deviceNameTextView: TextView
   private lateinit var projectIdTextView: TextView
   private lateinit var packageNameTextView: TextView
@@ -58,6 +62,7 @@ class MainActivity : Activity() {
   private lateinit var debugLogTextView: TextView
   private lateinit var copyDebugLogsButton: Button
   private lateinit var clearDebugLogsButton: Button
+  private lateinit var clearMessageHistoryButton: ImageButton
   private lateinit var deviceInfoToggleHeader: LinearLayout
   private lateinit var deviceInfoToggleChevron: TextView
   private lateinit var deviceAdvancedContainer: LinearLayout
@@ -79,6 +84,7 @@ class MainActivity : Activity() {
     setupBottomNavigation()
     setupDebugActions()
     setupDeviceAdvancedToggle()
+    setupHistoryClearAction()
     DebugLogStore.append(applicationContext, "ui", "MainActivity onCreate")
 
     val identity = RegistrationRepository.currentIdentity(this)
@@ -125,6 +131,7 @@ class MainActivity : Activity() {
     pairingDetailTextView = findViewById(R.id.pairingDetailTextView)
     pairedClientContainerView = findViewById(R.id.pairedClientContainerView)
     pairedClientTextView = findViewById(R.id.pairedClientTextView)
+    pairedClientItemsContainer = findViewById(R.id.pairedClientItemsContainer)
     deviceNameTextView = findViewById(R.id.deviceNameTextView)
     projectIdTextView = findViewById(R.id.projectIdTextView)
     packageNameTextView = findViewById(R.id.packageNameTextView)
@@ -147,6 +154,7 @@ class MainActivity : Activity() {
     debugLogTextView = findViewById(R.id.debugLogTextView)
     copyDebugLogsButton = findViewById(R.id.copyDebugLogsButton)
     clearDebugLogsButton = findViewById(R.id.clearDebugLogsButton)
+    clearMessageHistoryButton = findViewById(R.id.clearMessageHistoryButton)
     deviceInfoToggleHeader = findViewById(R.id.deviceInfoToggleHeader)
     deviceInfoToggleChevron = findViewById(R.id.deviceInfoToggleChevron)
     deviceAdvancedContainer = findViewById(R.id.deviceAdvancedContainer)
@@ -426,7 +434,7 @@ class MainActivity : Activity() {
     pairingDetailTextView.text = snapshot.pairingDetail
     pairingDetailTextView.visibility = if (snapshot.pairingDetail.isBlank()) View.GONE else View.VISIBLE
     pairedClientTextView.text = snapshot.pairedClientSummary
-    pairedClientContainerView.visibility = if (snapshot.pairedClientSummary.isBlank()) View.GONE else View.VISIBLE
+    renderPairedClients(snapshot)
     deviceNameTextView.text = snapshot.deviceName.ifBlank { "Android Device" }
     projectIdTextView.text = "Firebase Project: ${snapshot.projectId.ifBlank { "未读取到" }}"
     packageNameTextView.text = "包名: ${snapshot.packageName.ifBlank { "未读取到" }}"
@@ -460,6 +468,19 @@ class MainActivity : Activity() {
       val headerRow = itemView.findViewById<LinearLayout>(R.id.messageHeaderRow)
       val expandChevron = itemView.findViewById<TextView>(R.id.messageExpandChevron)
       val detailContainer = itemView.findViewById<LinearLayout>(R.id.messageDetailContainer)
+      val deleteButton = itemView.findViewById<ImageButton>(R.id.messageDeleteButton)
+      deleteButton.setOnClickListener {
+        AlertDialog.Builder(this)
+          .setTitle(R.string.message_delete_confirm_title)
+          .setNegativeButton(R.string.action_cancel, null)
+          .setPositiveButton(R.string.action_confirm) { _, _ ->
+            if (NotificationMessageStore.removeByLocalId(this, record.localId)) {
+              Toast.makeText(this, R.string.message_deleted, Toast.LENGTH_SHORT).show()
+              renderMessageHistory()
+            }
+          }
+          .show()
+      }
       detailContainer.visibility = View.GONE
       expandChevron.rotation = 0f
       headerRow.setOnClickListener {
@@ -580,6 +601,80 @@ class MainActivity : Activity() {
     deviceInfoToggleHeader.setOnClickListener {
       val expanded = deviceAdvancedContainer.visibility != View.VISIBLE
       applyState(expanded)
+    }
+  }
+
+  private fun setupHistoryClearAction() {
+    clearMessageHistoryButton.setOnClickListener {
+      AlertDialog.Builder(this)
+        .setTitle(R.string.history_clear_confirm_title)
+        .setMessage(R.string.history_clear_confirm_message)
+        .setNegativeButton(R.string.action_cancel, null)
+        .setPositiveButton(R.string.action_confirm) { _, _ ->
+          NotificationMessageStore.clearAll(this)
+          Toast.makeText(this, R.string.history_cleared, Toast.LENGTH_SHORT).show()
+          renderMessageHistory()
+        }
+        .show()
+    }
+  }
+
+  private fun renderPairedClients(snapshot: RegistrationSnapshot) {
+    pairedClientItemsContainer.removeAllViews()
+    data class PairedItem(
+      val name: String,
+      val displayId: String,
+      val groupId: String,
+      val clientId: String
+    )
+    val items = mutableListOf<PairedItem>()
+    val rawJson = snapshot.pairedClientsJson
+    if (rawJson.isNotBlank()) {
+      try {
+        val arr = JSONArray(rawJson)
+        for (i in 0 until arr.length()) {
+          val obj = arr.optJSONObject(i) ?: continue
+          val name = obj.optString("clientName").ifBlank { "未命名浏览器" }
+          val groupId = obj.optString("groupId")
+          val clientId = obj.optString("clientId")
+          if (groupId.isBlank() && clientId.isBlank()) continue
+          val displayId = groupId.ifBlank { clientId }
+          items += PairedItem(name, displayId, groupId, clientId)
+        }
+      } catch (_: Exception) {
+        // Malformed JSON; fall through to empty list.
+      }
+    }
+
+    if (items.isEmpty()) {
+      pairedClientContainerView.visibility =
+        if (snapshot.pairedClientSummary.isBlank()) View.GONE else View.VISIBLE
+      return
+    }
+
+    pairedClientContainerView.visibility = View.VISIBLE
+    for (item in items) {
+      val row = LayoutInflater.from(this).inflate(R.layout.item_paired_client, pairedClientItemsContainer, false)
+      row.findViewById<TextView>(R.id.pairedClientNameTextView).text = item.name
+      row.findViewById<TextView>(R.id.pairedClientIdTextView).text = item.displayId
+      row.findViewById<Button>(R.id.unpairClientButton).setOnClickListener {
+        AlertDialog.Builder(this)
+          .setTitle(R.string.unpair_confirm_title)
+          .setMessage(R.string.unpair_confirm_message)
+          .setNegativeButton(R.string.action_cancel, null)
+          .setPositiveButton(R.string.action_confirm) { _, _ ->
+            RegistrationRepository.unpairBrowser(this, item.groupId, item.clientId) { ok, errorMessage ->
+              if (ok) {
+                Toast.makeText(this, R.string.unpair_success, Toast.LENGTH_SHORT).show()
+                startRegistration("after-unpair")
+              } else {
+                Toast.makeText(this, getString(R.string.unpair_failed, errorMessage), Toast.LENGTH_LONG).show()
+              }
+            }
+          }
+          .show()
+      }
+      pairedClientItemsContainer.addView(row)
     }
   }
 

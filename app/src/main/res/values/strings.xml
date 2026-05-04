@@ -37,4 +37,17 @@
   <string name="nav_server">状态</string>
   <string name="online_label">在线</string>
   <string name="advanced_label">高级</string>
+  <string name="unpair_action">解绑</string>
+  <string name="unpair_confirm_title">解绑此浏览器？</string>
+  <string name="unpair_confirm_message">解绑后，这台浏览器将不再收到本设备的推送同步。可以重新生成配对码再次绑定。</string>
+  <string name="unpair_success">已解绑此浏览器</string>
+  <string name="unpair_failed">解绑失败：%1$s</string>
+  <string name="history_clear_all">清空全部</string>
+  <string name="history_clear_confirm_title">清空所有消息记录？</string>
+  <string name="history_clear_confirm_message">清空后将删除本机所有推送历史，且不可恢复。</string>
+  <string name="history_cleared">已清空消息记录</string>
+  <string name="message_delete_confirm_title">删除这条记录？</string>
+  <string name="message_deleted">已删除该条消息</string>
+  <string name="action_cancel">取消</string>
+  <string name="action_confirm">确认</string>
 </resources>

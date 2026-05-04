@@ -18,7 +18,8 @@ data class RegistrationSnapshot(
   val pairingCodeExpiresAt: String,
   val pairingStatus: String,
   val pairingDetail: String,
-  val pairedClientSummary: String
+  val pairedClientSummary: String,
+  val pairedClientsJson: String = ""
 ) {
   companion object {
     fun idle(identity: AppIdentity): RegistrationSnapshot {
@@ -40,7 +41,8 @@ data class RegistrationSnapshot(
         pairingCodeExpiresAt = "",
         pairingStatus = "",
         pairingDetail = "",
-        pairedClientSummary = ""
+        pairedClientSummary = "",
+        pairedClientsJson = ""
       )
     }
   }

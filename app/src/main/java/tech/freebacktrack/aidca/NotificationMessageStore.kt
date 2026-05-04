@@ -121,6 +121,23 @@ object NotificationMessageStore {
     updateStatus(context, eventId, messageId, "display-error", errorMessage)
   }
 
+  fun removeByLocalId(context: Context, localId: String): Boolean {
+    val target = localId.trim()
+    if (target.isBlank()) return false
+    val current = readAll(context)
+    val next = current.filterNot { it.localId == target }
+    if (next.size == current.size) return false
+    writeAll(context, next)
+    return true
+  }
+
+  fun clearAll(context: Context) {
+    context.applicationContext.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
+      .edit()
+      .remove(MESSAGES_KEY)
+      .apply()
+  }
+
   private fun updateStatus(
     context: Context,
     eventId: String,

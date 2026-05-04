@@ -31,7 +31,8 @@ object RegistrationStateStore {
         pairingCodeExpiresAt = payload.optString("pairingCodeExpiresAt"),
         pairingStatus = payload.optString("pairingStatus"),
         pairingDetail = payload.optString("pairingDetail"),
-        pairedClientSummary = payload.optString("pairedClientSummary")
+        pairedClientSummary = payload.optString("pairedClientSummary"),
+        pairedClientsJson = payload.optString("pairedClientsJson")
       )
     } catch (_error: Exception) {
       RegistrationSnapshot.idle(fallbackIdentity)
@@ -58,6 +59,7 @@ object RegistrationStateStore {
       .put("pairingStatus", snapshot.pairingStatus)
       .put("pairingDetail", snapshot.pairingDetail)
       .put("pairedClientSummary", snapshot.pairedClientSummary)
+      .put("pairedClientsJson", snapshot.pairedClientsJson)
 
     context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
       .edit()

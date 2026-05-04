@@ -47,6 +47,17 @@
         android:ellipsize="end" />
     </LinearLayout>
 
+    <ImageButton
+      android:id="@+id/messageDeleteButton"
+      android:layout_width="32dp"
+      android:layout_height="32dp"
+      android:layout_marginLeft="6dp"
+      android:background="?android:attr/selectableItemBackgroundBorderless"
+      android:contentDescription="@string/message_delete_confirm_title"
+      android:padding="6dp"
+      android:scaleType="fitCenter"
+      android:src="@drawable/ic_trash" />
+
     <TextView
       android:id="@+id/messageExpandChevron"
       android:layout_width="wrap_content"
