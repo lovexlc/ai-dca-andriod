@@ -6,12 +6,8 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import android.text.SpannableStringBuilder
-import android.text.Spanned
-import android.text.style.StyleSpan
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import java.util.regex.Pattern
 
 class NotifyMessagingService : FirebaseMessagingService() {
   override fun onNewToken(token: String) {
@@ -41,7 +37,8 @@ class NotifyMessagingService : FirebaseMessagingService() {
     val purchaseAmount = message.data["purchaseAmount"].orEmpty()
     val detailUrl = message.data["detailUrl"].orEmpty()
     val expandedBody = buildExpandedBody(body, triggerCondition, purchaseAmount, detailUrl)
-    val expandedBodyRich = if (bodyMd.isNotBlank()) renderMarkdownLikeText(bodyMd) else expandedBody
+    val expandedBodyRich: CharSequence =
+      if (bodyMd.isNotBlank()) MarkdownRenderer.render(bodyMd) else expandedBody
     DebugLogStore.append(
       applicationContext,
       "fcm",
@@ -54,6 +51,7 @@ class NotifyMessagingService : FirebaseMessagingService() {
       eventType = eventType,
       title = title,
       body = body,
+      bodyMd = bodyMd,
       triggerCondition = triggerCondition,
       purchaseAmount = purchaseAmount,
       detailUrl = detailUrl,
@@ -114,40 +112,6 @@ class NotifyMessagingService : FirebaseMessagingService() {
 
   companion object {
     private const val CHANNEL_ID = "ai_dca_messages"
-
-    private val BOLD_PATTERN = Pattern.compile("\\*\\*(.+?)\\*\\*")
-
-    /**
-     * 轻量“Markdown-like”渲染：目前仅支持 **bold**。
-     * Android 通知栏不原生支持 Markdown，需要客户端自行转成 Spannable。
-     */
-    private fun renderMarkdownLikeText(input: String): CharSequence {
-      val text = input.replace("\r\n", "\n").replace("\r", "\n")
-      val out = SpannableStringBuilder()
-      var cursor = 0
-      val matcher = BOLD_PATTERN.matcher(text)
-      while (matcher.find()) {
-        val start = matcher.start()
-        val end = matcher.end()
-        if (start > cursor) {
-          out.append(text.substring(cursor, start))
-        }
-        val boldText = matcher.group(1) ?: ""
-        val spanStart = out.length
-        out.append(boldText)
-        out.setSpan(
-          StyleSpan(android.graphics.Typeface.BOLD),
-          spanStart,
-          out.length,
-          Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-        )
-        cursor = end
-      }
-      if (cursor < text.length) {
-        out.append(text.substring(cursor))
-      }
-      return out
-    }
 
     fun ensureNotificationChannel(context: Context) {
       if (Build.VERSION.SDK_INT < 26) {

@@ -502,6 +502,10 @@ class MainActivity : Activity() {
         }
       }
       bodyView.text = record.body.ifBlank { "这条推送没有正文内容。" }
+      if (record.bodyMd.isNotBlank()) {
+        bodyView.text = MarkdownRenderer.render(record.bodyMd)
+        bodyView.movementMethod = android.text.method.LinkMovementMethod.getInstance()
+      }
       detailView.text = buildString {
         if (record.triggerCondition.isNotBlank()) {
           append("触发条件: ")

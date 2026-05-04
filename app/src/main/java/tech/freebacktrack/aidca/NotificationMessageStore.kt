@@ -15,6 +15,7 @@ data class NotificationMessageRecord(
   val receivedAt: String,
   val title: String,
   val body: String,
+  val bodyMd: String,
   val triggerCondition: String,
   val purchaseAmount: String,
   val detailUrl: String,
@@ -47,6 +48,7 @@ object NotificationMessageStore {
               receivedAt = item.optString("receivedAt"),
               title = item.optString("title"),
               body = item.optString("body"),
+              bodyMd = item.optString("bodyMd"),
               triggerCondition = item.optString("triggerCondition"),
               purchaseAmount = item.optString("purchaseAmount"),
               detailUrl = item.optString("detailUrl"),
@@ -70,6 +72,7 @@ object NotificationMessageStore {
     eventType: String,
     title: String,
     body: String,
+    bodyMd: String,
     triggerCondition: String,
     purchaseAmount: String,
     detailUrl: String,
@@ -84,6 +87,7 @@ object NotificationMessageStore {
       receivedAt = nowLabel(),
       title = title,
       body = body,
+      bodyMd = bodyMd,
       triggerCondition = triggerCondition,
       purchaseAmount = purchaseAmount,
       detailUrl = detailUrl,
@@ -177,6 +181,7 @@ object NotificationMessageStore {
           .put("receivedAt", record.receivedAt)
           .put("title", record.title)
           .put("body", record.body)
+          .put("bodyMd", record.bodyMd)
           .put("triggerCondition", record.triggerCondition)
           .put("purchaseAmount", record.purchaseAmount)
           .put("detailUrl", record.detailUrl)
