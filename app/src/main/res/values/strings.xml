@@ -50,4 +50,10 @@
   <string name="message_deleted">已删除该条消息</string>
   <string name="action_cancel">取消</string>
   <string name="action_confirm">确认</string>
+  <string name="dnd_bypass_title">允许在勿扰模式下仍然响铃？</string>
+  <string name="dnd_bypass_message">交易提醒在勿扰 / 静音模式下默认不会响铃。请将「基金通知」加入勿扰例外，重要提醒才能穿透。</string>
+  <string name="dnd_bypass_open_settings">去设置</string>
+  <string name="dnd_bypass_skip">以后再说</string>
+  <string name="dnd_bypass_unsupported">当前系统不支持勿扰旁路设置</string>
+  <string name="dnd_bypass_route_failed">无法打开勿扰权限设置页：%1$s</string>
 </resources>

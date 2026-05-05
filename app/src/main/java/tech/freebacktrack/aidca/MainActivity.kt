@@ -3,8 +3,10 @@ package tech.freebacktrack.aidca
 import android.Manifest
 import android.app.AlertDialog
 import android.app.Activity
+import android.app.NotificationManager
 import android.content.ClipData
 import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -12,6 +14,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowInsets
@@ -92,6 +95,7 @@ class MainActivity : Activity() {
     renderMessageHistory()
     renderDebugPanel()
     requestNotificationPermissionIfNeeded()
+    requestDndAccessIfNeeded()
 
     startRegistration("app-launch")
   }
@@ -621,6 +625,67 @@ class MainActivity : Activity() {
 
     DebugLogStore.append(applicationContext, "permission", "Requesting POST_NOTIFICATIONS")
     requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), REQUEST_NOTIFICATIONS)
+  }
+
+  private fun requestDndAccessIfNeeded() {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+      DebugLogStore.append(applicationContext, "permission", "DND policy access not required on this Android version")
+      return
+    }
+
+    val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+    if (notificationManager == null) {
+      DebugLogStore.append(applicationContext, "permission", "NotificationManager unavailable; skip DND prompt")
+      return
+    }
+
+    if (notificationManager.isNotificationPolicyAccessGranted) {
+      DebugLogStore.append(applicationContext, "permission", "DND policy access already granted")
+      return
+    }
+
+    val prefs = getSharedPreferences("ai_dca_notify_state", Context.MODE_PRIVATE)
+    val promptedKey = "dnd_bypass_prompted_v1"
+    if (prefs.getBoolean(promptedKey, false)) {
+      DebugLogStore.append(applicationContext, "permission", "DND prompt already shown previously; not reprompting")
+      return
+    }
+
+    DebugLogStore.append(applicationContext, "permission", "Prompting user to grant DND policy access")
+
+    AlertDialog.Builder(this)
+      .setTitle(R.string.dnd_bypass_title)
+      .setMessage(R.string.dnd_bypass_message)
+      .setNegativeButton(R.string.dnd_bypass_skip) { _, _ ->
+        prefs.edit().putBoolean(promptedKey, true).apply()
+        DebugLogStore.append(applicationContext, "permission", "DND prompt skipped by user")
+      }
+      .setPositiveButton(R.string.dnd_bypass_open_settings) { _, _ ->
+        prefs.edit().putBoolean(promptedKey, true).apply()
+        openDndPolicyAccessSettings()
+      }
+      .setCancelable(false)
+      .show()
+  }
+
+  private fun openDndPolicyAccessSettings() {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+      Toast.makeText(this, R.string.dnd_bypass_unsupported, Toast.LENGTH_SHORT).show()
+      return
+    }
+
+    val intent = Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS).apply {
+      addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+
+    try {
+      startActivity(intent)
+      DebugLogStore.append(applicationContext, "permission", "Launched DND policy access settings")
+    } catch (error: Exception) {
+      val message = error.message.orEmpty()
+      Toast.makeText(this, getString(R.string.dnd_bypass_route_failed, message), Toast.LENGTH_LONG).show()
+      DebugLogStore.append(applicationContext, "permission", "Failed to open DND policy access settings: ${'$'}message")
+    }
   }
 
   private fun setupDeviceAdvancedToggle() {
