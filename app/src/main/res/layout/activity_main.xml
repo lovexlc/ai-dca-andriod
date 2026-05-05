@@ -248,6 +248,43 @@
               android:orientation="vertical" />
           </LinearLayout>
         </LinearLayout>
+
+        <!-- ============ Bark 测试推送预览卡 ============ -->
+        <LinearLayout
+          android:id="@+id/barkPreviewContainer"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:layout_marginTop="14dp"
+          android:background="@drawable/card_surface"
+          android:elevation="1dp"
+          android:orientation="vertical"
+          android:padding="20dp"
+          android:visibility="gone">
+
+          <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/bark_test_section_label"
+            android:textColor="@color/text_primary"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+          <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:lineSpacingExtra="2dp"
+            android:text="@string/bark_test_section_hint"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp" />
+
+          <LinearLayout
+            android:id="@+id/barkPreviewItemsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:orientation="vertical" />
+        </LinearLayout>
       </LinearLayout>
 
       <!-- ============ SETTINGS (设备) SECTION ============ -->
@@ -260,6 +297,182 @@
         android:elevation="1dp"
         android:orientation="vertical"
         android:padding="20dp">
+
+        <!-- ============ 设置 tab 扩展 (历史/加密/铃声) ============ -->
+        <LinearLayout
+          android:id="@+id/settingsExtrasContainer"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:layout_marginBottom="18dp"
+          android:orientation="vertical">
+
+          <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:letterSpacing="0.08"
+            android:text="@string/settings_history_section"
+            android:textColor="@color/text_tertiary"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+          <LinearLayout
+            android:id="@+id/defaultArchiveRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:minHeight="48dp"
+            android:orientation="horizontal"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
+
+            <LinearLayout
+              android:layout_width="0dp"
+              android:layout_height="wrap_content"
+              android:layout_weight="1"
+              android:orientation="vertical">
+
+              <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_default_archive_label"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp" />
+
+              <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:lineSpacingExtra="1dp"
+                android:text="@string/settings_default_archive_subtitle"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+            </LinearLayout>
+
+            <Switch
+              android:id="@+id/defaultArchiveSwitch"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:layout_marginLeft="12dp" />
+          </LinearLayout>
+
+          <LinearLayout
+            android:id="@+id/encryptionKeyRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:minHeight="48dp"
+            android:orientation="horizontal"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
+
+            <LinearLayout
+              android:layout_width="0dp"
+              android:layout_height="wrap_content"
+              android:layout_weight="1"
+              android:orientation="vertical">
+
+              <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_encryption_key_label"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp" />
+
+              <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:lineSpacingExtra="1dp"
+                android:text="@string/settings_encryption_key_subtitle"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+            </LinearLayout>
+
+            <TextView
+              android:id="@+id/encryptionKeyStatus"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:layout_marginLeft="12dp"
+              android:text="@string/settings_encryption_key_status_unset"
+              android:textColor="@color/text_secondary"
+              android:textSize="13sp" />
+
+            <TextView
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:layout_marginLeft="6dp"
+              android:text="›"
+              android:textColor="@color/text_tertiary"
+              android:textSize="20sp" />
+          </LinearLayout>
+
+          <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:letterSpacing="0.08"
+            android:text="@string/settings_bark_section"
+            android:textColor="@color/text_tertiary"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+          <LinearLayout
+            android:id="@+id/ringtoneRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:minHeight="48dp"
+            android:orientation="horizontal"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
+
+            <LinearLayout
+              android:layout_width="0dp"
+              android:layout_height="wrap_content"
+              android:layout_weight="1"
+              android:orientation="vertical">
+
+              <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_ringtone_label"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp" />
+
+              <TextView
+                android:id="@+id/ringtoneCurrentValue"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="@string/settings_ringtone_subtitle_default"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+            </LinearLayout>
+
+            <TextView
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:layout_marginLeft="6dp"
+              android:text="›"
+              android:textColor="@color/text_tertiary"
+              android:textSize="20sp" />
+          </LinearLayout>
+
+          <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="18dp"
+            android:background="@color/divider_subtle" />
+        </LinearLayout>
 
         <LinearLayout
           android:id="@+id/deviceInfoToggleHeader"
@@ -587,11 +800,33 @@
             android:textStyle="bold" />
 
           <ImageButton
+            android:id="@+id/historyFilterButton"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginRight="4dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/history_filter_action"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_trash" />
+
+          <ImageButton
             android:id="@+id/clearMessageHistoryButton"
             android:layout_width="36dp"
             android:layout_height="36dp"
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/history_clear_all"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_trash" />
+
+          <ImageButton
+            android:id="@+id/historySearchButton"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginLeft="4dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/history_search_action"
             android:padding="8dp"
             android:scaleType="fitCenter"
             android:src="@drawable/ic_trash" />

@@ -315,7 +315,22 @@ class NotifyMessagingService : FirebaseMessagingService() {
         description = "Bark 风格推送通道（level=${normalizedLevel}" +
           (if (soundKey.isNotEmpty()) ", sound=$sound" else "") +
           (if (call) ", call=1" else "") + "）"
-        if (call || normalizedLevel == "critical") {
+        // 1) 当 sound=<name> 且 res/raw/<name>.* 存在时，无论 level/call 如何都用该 raw 资源做铃声。
+        // 2) 否则 call=1 / critical 退回到默认 alarm uri，保持 v1 行为。
+        // 3) 普通 level 且没找到 raw 资源时不显式 setSound，使用 channel 默认。
+        val rawResId = if (soundKey.isNotEmpty()) {
+          context.resources.getIdentifier(soundKey, "raw", context.packageName)
+        } else 0
+        if (rawResId != 0) {
+          val attrs = AudioAttributes.Builder()
+            .setUsage(if (call || normalizedLevel == "critical") AudioAttributes.USAGE_ALARM else AudioAttributes.USAGE_NOTIFICATION)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
+          val soundUri = Uri.parse("android.resource://${context.packageName}/$rawResId")
+          setSound(soundUri, attrs)
+          if (call || normalizedLevel == "critical") enableVibration(true)
+          DebugLogStore.append(context.applicationContext, "notify", "channel $channelId sound=raw/$soundKey")
+        } else if (call || normalizedLevel == "critical") {
           val attrs = AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_ALARM)
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
@@ -323,6 +338,7 @@ class NotifyMessagingService : FirebaseMessagingService() {
           val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
           setSound(soundUri, attrs)
           enableVibration(true)
+          DebugLogStore.append(context.applicationContext, "notify", "channel $channelId sound=default-alarm (raw/${soundKey.ifBlank { "<none>" }} not found)")
         }
       }
 

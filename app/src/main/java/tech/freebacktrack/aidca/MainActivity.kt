@@ -19,15 +19,18 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowInsets
 import android.widget.Button
+import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.ScrollView
+import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
 import org.json.JSONObject
 import org.json.JSONArray
 import java.net.HttpURLConnection
 import java.net.URL
+import java.net.URLEncoder
 import java.util.concurrent.Executors
 
 class MainActivity : Activity() {
@@ -69,6 +72,20 @@ class MainActivity : Activity() {
   private lateinit var deviceInfoToggleHeader: LinearLayout
   private lateinit var deviceInfoToggleChevron: TextView
   private lateinit var deviceAdvancedContainer: LinearLayout
+  // Bark 测试推送预览卡
+  private lateinit var barkPreviewContainer: LinearLayout
+  private lateinit var barkPreviewItemsContainer: LinearLayout
+  // 历史 tab action bar
+  private lateinit var historyFilterButton: ImageButton
+  private lateinit var historySearchButton: ImageButton
+  // 设置 tab 扩展
+  private lateinit var settingsExtrasContainer: LinearLayout
+  private lateinit var defaultArchiveRow: LinearLayout
+  private lateinit var defaultArchiveSwitch: Switch
+  private lateinit var encryptionKeyRow: LinearLayout
+  private lateinit var encryptionKeyStatus: TextView
+  private lateinit var ringtoneRow: LinearLayout
+  private lateinit var ringtoneCurrentValue: TextView
   private var titleTapCount = 0
   private var lastTitleTapAtMs = 0L
   private val executor = Executors.newSingleThreadExecutor()
@@ -88,6 +105,8 @@ class MainActivity : Activity() {
     setupDebugActions()
     setupDeviceAdvancedToggle()
     setupHistoryClearAction()
+    setupHistoryActionBar()
+    setupSettingsExtras()
     DebugLogStore.append(applicationContext, "ui", "MainActivity onCreate")
 
     val identity = RegistrationRepository.currentIdentity(this)
@@ -162,6 +181,17 @@ class MainActivity : Activity() {
     deviceInfoToggleHeader = findViewById(R.id.deviceInfoToggleHeader)
     deviceInfoToggleChevron = findViewById(R.id.deviceInfoToggleChevron)
     deviceAdvancedContainer = findViewById(R.id.deviceAdvancedContainer)
+    barkPreviewContainer = findViewById(R.id.barkPreviewContainer)
+    barkPreviewItemsContainer = findViewById(R.id.barkPreviewItemsContainer)
+    historyFilterButton = findViewById(R.id.historyFilterButton)
+    historySearchButton = findViewById(R.id.historySearchButton)
+    settingsExtrasContainer = findViewById(R.id.settingsExtrasContainer)
+    defaultArchiveRow = findViewById(R.id.defaultArchiveRow)
+    defaultArchiveSwitch = findViewById(R.id.defaultArchiveSwitch)
+    encryptionKeyRow = findViewById(R.id.encryptionKeyRow)
+    encryptionKeyStatus = findViewById(R.id.encryptionKeyStatus)
+    ringtoneRow = findViewById(R.id.ringtoneRow)
+    ringtoneCurrentValue = findViewById(R.id.ringtoneCurrentValue)
   }
 
   // targetSdk 35 强制 edge-to-edge 时，状态栏会覆盖内容；用 WindowInsets 显式吸收 systemBars
@@ -472,6 +502,7 @@ class MainActivity : Activity() {
     senderIdTextView.text = "Sender ID: ${snapshot.senderId.ifBlank { "未读取到" }}"
     deviceInstallationIdTextView.text = snapshot.deviceInstallationId.ifBlank { DeviceInstallationStore.getOrCreate(applicationContext) }
     tokenTextView.text = if (snapshot.tokenMasked.isBlank()) "FCM token 尚未可用" else "Token: ${snapshot.tokenMasked}"
+    renderBarkPreviewCards(snapshot.deviceInstallationId.ifBlank { DeviceInstallationStore.getOrCreate(applicationContext) })
   }
 
   private fun renderMessageHistory() {
@@ -712,6 +743,155 @@ class MainActivity : Activity() {
           renderMessageHistory()
         }
         .show()
+    }
+  }
+
+  // 历史 tab action bar：筛选 / 清空 / 搜索。
+  // 筛选 + 搜索本轮只放出按钮架子，点击提示“功能开发中”；清空复用原 setupHistoryClearAction 逻辑。
+  private fun setupHistoryActionBar() {
+    val placeholder = View.OnClickListener {
+      Toast.makeText(this, R.string.feature_in_progress, Toast.LENGTH_SHORT).show()
+    }
+    historyFilterButton.setOnClickListener(placeholder)
+    historySearchButton.setOnClickListener(placeholder)
+  }
+
+  // 设置 tab 扩展：默认保存 / 加密密钥 / 推送铃声。
+  private fun setupSettingsExtras() {
+    val prefs = getSharedPreferences("ai_dca_notify_state", Context.MODE_PRIVATE)
+
+    // 默认保存 (isArchive)
+    val defaultArchive = prefs.getBoolean("default_archive", true)
+    defaultArchiveSwitch.isChecked = defaultArchive
+    defaultArchiveSwitch.setOnCheckedChangeListener { _, isChecked ->
+      prefs.edit().putBoolean("default_archive", isChecked).apply()
+    }
+    // 点击整行也能切换
+    defaultArchiveRow.setOnClickListener {
+      defaultArchiveSwitch.toggle()
+    }
+
+    // 加密密钥
+    fun refreshEncryptionKeyStatus() {
+      val key = prefs.getString("encryption_key", "").orEmpty()
+      encryptionKeyStatus.text = if (key.isBlank()) {
+        getString(R.string.settings_encryption_key_status_unset)
+      } else {
+        getString(R.string.settings_encryption_key_status_set)
+      }
+    }
+    refreshEncryptionKeyStatus()
+    encryptionKeyRow.setOnClickListener {
+      val edit = EditText(this).apply {
+        setText(prefs.getString("encryption_key", "").orEmpty())
+        setSingleLine(true)
+      }
+      AlertDialog.Builder(this)
+        .setTitle(R.string.settings_encryption_key_dialog_title)
+        .setMessage(R.string.settings_encryption_key_subtitle)
+        .setView(edit)
+        .setNegativeButton(R.string.action_cancel, null)
+        .setPositiveButton(R.string.action_confirm) { _, _ ->
+          val newKey = edit.text?.toString()?.trim().orEmpty()
+          prefs.edit().putString("encryption_key", newKey).apply()
+          val msgRes = if (newKey.isBlank()) R.string.settings_encryption_key_cleared else R.string.settings_encryption_key_set
+          Toast.makeText(this, msgRes, Toast.LENGTH_SHORT).show()
+          refreshEncryptionKeyStatus()
+        }
+        .show()
+    }
+
+    // 推送铃声
+    fun listRawSounds(): List<String> = try {
+      R.raw::class.java.fields.map { it.name }.sorted()
+    } catch (_: Exception) {
+      emptyList()
+    }
+    fun refreshRingtoneLabel() {
+      val current = prefs.getString("selected_ringtone", "").orEmpty()
+      ringtoneCurrentValue.text = if (current.isBlank()) {
+        getString(R.string.settings_ringtone_subtitle_default)
+      } else {
+        current
+      }
+    }
+    refreshRingtoneLabel()
+    ringtoneRow.setOnClickListener {
+      val raws = listRawSounds()
+      val labels = mutableListOf(getString(R.string.settings_ringtone_subtitle_default))
+      labels.addAll(raws)
+      val current = prefs.getString("selected_ringtone", "").orEmpty()
+      val checkedIndex = if (current.isBlank()) 0 else (raws.indexOf(current).let { if (it >= 0) it + 1 else 0 })
+      AlertDialog.Builder(this)
+        .setTitle(R.string.settings_ringtone_dialog_title)
+        .setSingleChoiceItems(labels.toTypedArray(), checkedIndex) { dialog, which ->
+          val picked = if (which == 0) "" else (raws.getOrNull(which - 1) ?: "")
+          prefs.edit().putString("selected_ringtone", picked).apply()
+          refreshRingtoneLabel()
+          dialog.dismiss()
+        }
+        .setNegativeButton(R.string.action_cancel, null)
+        .show()
+    }
+  }
+
+  // 服务器 tab Bark 测试 URL 预览卡。
+  private fun renderBarkPreviewCards(deviceInstallationId: String) {
+    val key = deviceInstallationId.trim()
+    if (key.isBlank()) {
+      barkPreviewContainer.visibility = View.GONE
+      return
+    }
+    barkPreviewContainer.visibility = View.VISIBLE
+    barkPreviewItemsContainer.removeAllViews()
+
+    fun encodePath(s: String): String =
+      URLEncoder.encode(s, "UTF-8").replace("+", "%20")
+
+    val base = BuildConfig.NOTIFY_BASE_URL.trimEnd('/')
+    data class Item(val title: String, val url: String)
+    val items = listOf(
+      Item("推送内容", "$base/bark/$key/${encodePath("这是一条测试推送")}"),
+      Item("推送标题 + 内容", "$base/bark/$key/${encodePath("推送标题")}/${encodePath("这是测试推送内容")}"),
+      Item("推送铃声", "$base/bark/$key/${encodePath("推送铃声")}?sound=alarm"),
+      Item("持续响铃", "$base/bark/$key/${encodePath("持续响铃")}?call=1"),
+    )
+
+    for (item in items) {
+      val row = LayoutInflater.from(this).inflate(R.layout.item_bark_preview, barkPreviewItemsContainer, false)
+      row.findViewById<TextView>(R.id.barkItemTitle).text = item.title
+      row.findViewById<TextView>(R.id.barkItemUrl).text = item.url
+      row.findViewById<TextView>(R.id.barkItemCopy).setOnClickListener {
+        val clipboardManager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+        clipboardManager.setPrimaryClip(ClipData.newPlainText("Bark URL", item.url))
+        Toast.makeText(this, R.string.bark_url_copied, Toast.LENGTH_SHORT).show()
+      }
+      row.findViewById<TextView>(R.id.barkItemSend).setOnClickListener {
+        val targetUrl = item.url
+        executor.execute {
+          var conn: HttpURLConnection? = null
+          try {
+            conn = (URL(targetUrl).openConnection() as HttpURLConnection).apply {
+              requestMethod = "GET"
+              connectTimeout = 5000
+              readTimeout = 5000
+              setRequestProperty("user-agent", "ai-dca-android")
+            }
+            val code = conn.responseCode
+            mainHandler.post {
+              Toast.makeText(this, getString(R.string.bark_send_success, code), Toast.LENGTH_SHORT).show()
+            }
+          } catch (e: Exception) {
+            val msg = e.message ?: e.javaClass.simpleName
+            mainHandler.post {
+              Toast.makeText(this, getString(R.string.bark_send_failed, msg), Toast.LENGTH_LONG).show()
+            }
+          } finally {
+            try { conn?.disconnect() } catch (_: Exception) {}
+          }
+        }
+      }
+      barkPreviewItemsContainer.addView(row)
     }
   }
 
