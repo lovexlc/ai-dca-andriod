@@ -85,6 +85,9 @@ class MainActivity : Activity() {
   private lateinit var defaultArchiveSwitch: Switch
   private lateinit var realtimeChannelRow: LinearLayout
   private lateinit var realtimeChannelSwitch: Switch
+  private lateinit var keepaliveBatteryRow: LinearLayout
+  private lateinit var keepaliveBatteryStatus: TextView
+  private lateinit var keepaliveAutostartRow: LinearLayout
   private lateinit var encryptionKeyRow: LinearLayout
   private lateinit var encryptionKeyStatus: TextView
   private lateinit var ringtoneRow: LinearLayout
@@ -148,6 +151,9 @@ class MainActivity : Activity() {
     super.onResume()
     renderMessageHistory()
     renderDebugPanel()
+    if (::keepaliveBatteryStatus.isInitialized) {
+      refreshKeepaliveStatus()
+    }
   }
 
   private fun bindViews() {
@@ -198,6 +204,9 @@ class MainActivity : Activity() {
     defaultArchiveSwitch = findViewById(R.id.defaultArchiveSwitch)
     realtimeChannelRow = findViewById(R.id.realtimeChannelRow)
     realtimeChannelSwitch = findViewById(R.id.realtimeChannelSwitch)
+    keepaliveBatteryRow = findViewById(R.id.keepaliveBatteryRow)
+    keepaliveBatteryStatus = findViewById(R.id.keepaliveBatteryStatus)
+    keepaliveAutostartRow = findViewById(R.id.keepaliveAutostartRow)
     encryptionKeyRow = findViewById(R.id.encryptionKeyRow)
     encryptionKeyStatus = findViewById(R.id.encryptionKeyStatus)
     ringtoneRow = findViewById(R.id.ringtoneRow)
@@ -800,6 +809,23 @@ class MainActivity : Activity() {
       realtimeChannelSwitch.toggle()
     }
 
+    // 后台保活引导：电池优化白名单 + 厂商自启动入口。
+    refreshKeepaliveStatus()
+    keepaliveBatteryRow.setOnClickListener {
+      if (KeepaliveHelper.isOnBatteryWhitelist(this)) {
+        Toast.makeText(this, R.string.settings_keepalive_battery_done, Toast.LENGTH_SHORT).show()
+      } else {
+        KeepaliveHelper.requestBatteryWhitelist(this)
+      }
+    }
+    keepaliveAutostartRow.setOnClickListener {
+      val ok = KeepaliveHelper.openAutostartSettings(this)
+      if (!ok) {
+        KeepaliveHelper.openAppDetailsSettings(this)
+        Toast.makeText(this, R.string.settings_keepalive_unsupported, Toast.LENGTH_SHORT).show()
+      }
+    }
+
     // 加密密钥
     fun refreshEncryptionKeyStatus() {
       val key = prefs.getString("encryption_key", "").orEmpty()
@@ -1034,6 +1060,14 @@ class MainActivity : Activity() {
           Toast.makeText(this, R.string.settings_realtime_channel_need_pair, Toast.LENGTH_SHORT).show()
         }
       }
+  }
+
+  private fun refreshKeepaliveStatus() {
+    keepaliveBatteryStatus.text = if (KeepaliveHelper.isOnBatteryWhitelist(this)) {
+      getString(R.string.settings_keepalive_battery_done)
+    } else {
+      getString(R.string.settings_keepalive_open)
+    }
   }
 
   private data class BadgeStyle(

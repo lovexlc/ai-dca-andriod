@@ -99,4 +99,12 @@
   <string name="settings_realtime_channel_need_pair">需要先完成设备注册才能启用</string>
   <string name="settings_realtime_channel_started">实时通道已启用</string>
   <string name="settings_realtime_channel_stopped">实时通道已关闭</string>
+  <string name="settings_keepalive_label">后台保活引导</string>
+  <string name="settings_keepalive_subtitle">加入电池优化白名单、打开厂商自启动，可靠推送</string>
+  <string name="settings_keepalive_battery">电池优化白名单</string>
+  <string name="settings_keepalive_battery_done">已在白名单</string>
+  <string name="settings_keepalive_autostart">自启动 / 后台运行</string>
+  <string name="settings_keepalive_autostart_subtitle">跳转到厂商设置，允许后台运行与自启动</string>
+  <string name="settings_keepalive_open">去设置</string>
+  <string name="settings_keepalive_unsupported">本机未实现专用入口，已打开应用详情</string>
 </resources>
