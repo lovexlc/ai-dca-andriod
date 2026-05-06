@@ -38,10 +38,6 @@ import java.util.concurrent.Executors
 
 class MainActivity : Activity() {
   private lateinit var titleTextView: TextView
-  private lateinit var statusBadgeTextView: TextView
-  private lateinit var statusTitleTextView: TextView
-  private lateinit var statusDetailTextView: TextView
-  private lateinit var statusUpdatedAtTextView: TextView
   private lateinit var pairingCardView: LinearLayout
   private lateinit var pairingStatusTextView: TextView
   private lateinit var pairingCodeTextView: TextView
@@ -164,10 +160,6 @@ class MainActivity : Activity() {
 
   private fun bindViews() {
     titleTextView = findViewById(R.id.titleTextView)
-    statusBadgeTextView = findViewById(R.id.statusBadgeTextView)
-    statusTitleTextView = findViewById(R.id.statusTitleTextView)
-    statusDetailTextView = findViewById(R.id.statusDetailTextView)
-    statusUpdatedAtTextView = findViewById(R.id.statusUpdatedAtTextView)
     pairingCardView = findViewById(R.id.pairingCardView)
     pairingStatusTextView = findViewById(R.id.pairingStatusTextView)
     pairingCodeTextView = findViewById(R.id.pairingCodeTextView)
@@ -493,23 +485,6 @@ class MainActivity : Activity() {
   }
 
   private fun renderSnapshot(snapshot: RegistrationSnapshot) {
-    val badge = when (snapshot.state) {
-      "validated", "connected" -> BadgeStyle("已校验", R.drawable.status_badge_connected, R.color.text_on_hero)
-      "registered" -> BadgeStyle("已注册", R.drawable.status_badge_registered, R.color.text_on_hero)
-      "error" -> BadgeStyle("失败", R.drawable.status_badge_error, R.color.text_on_hero)
-      else -> BadgeStyle(getString(R.string.status_idle), R.drawable.status_badge_idle, R.color.text_on_hero_muted)
-    }
-
-    statusBadgeTextView.text = badge.label
-    statusBadgeTextView.setBackgroundResource(badge.backgroundRes)
-    statusBadgeTextView.setTextColor(getColor(badge.textColorRes))
-    statusTitleTextView.text = snapshot.title
-    statusDetailTextView.text = snapshot.detail
-    // 成功状态下徽章 + 标题已经表达了「服务端已连通」，不再显示「FCM http v1 已连通」之类的冗余 detail。
-    val hideDetailOnSuccess = snapshot.state == "validated" || snapshot.state == "connected"
-    statusDetailTextView.visibility =
-      if (snapshot.detail.isBlank() || hideDetailOnSuccess) View.GONE else View.VISIBLE
-    statusUpdatedAtTextView.text = if (snapshot.updatedAt.isBlank()) "尚未完成自动注册" else "最近更新: ${snapshot.updatedAt}"
     pairingCardView.visibility = View.VISIBLE
     val deviceIdForBinding = snapshot.deviceInstallationId.ifBlank {
       DeviceInstallationStore.getOrCreate(applicationContext)
@@ -1278,12 +1253,6 @@ class MainActivity : Activity() {
       getString(R.string.settings_keepalive_open)
     }
   }
-
-  private data class BadgeStyle(
-    val label: String,
-    val backgroundRes: Int,
-    val textColorRes: Int
-  )
 
   companion object {
     const val EXTRA_EVENT_ID = "extra_event_id"
