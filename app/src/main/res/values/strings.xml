@@ -4,7 +4,9 @@
   <string name="status_label">当前状态</string>
   <string name="device_info_label">设备信息</string>
   <string name="message_history_label">消息历史</string>
-  <string name="pairing_label">前端配对</string>
+  <string name="pairing_label">Web 端绑定 ID</string>
+  <string name="pairing_detail_hint">点击复制设备 ID，粘贴到 Web 控制台 → 通知设置 → 绑定 Android 设备</string>
+  <string name="pairing_id_copied">设备 ID 已复制</string>
   <string name="paired_browser_label">已绑定浏览器</string>
   <string name="device_installation_id_label">设备唯一 ID</string>
   <string name="action_copy_device_id">复制</string>

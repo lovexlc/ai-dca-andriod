@@ -483,17 +483,19 @@ class MainActivity : Activity() {
       if (snapshot.detail.isBlank() || hideDetailOnSuccess) View.GONE else View.VISIBLE
     statusUpdatedAtTextView.text = if (snapshot.updatedAt.isBlank()) "尚未完成自动注册" else "最近更新: ${snapshot.updatedAt}"
     pairingCardView.visibility = View.VISIBLE
-    pairingStatusTextView.text = when (snapshot.pairingStatus) {
-      "issued" -> "前端配对码已生成"
-      "error" -> "前端配对码生成失败"
-      "paired" -> "当前设备已绑定浏览器"
-      "unavailable" -> "前端配对码暂不可用"
-      else -> "等待生成前端配对码"
+    val deviceIdForBinding = snapshot.deviceInstallationId.ifBlank {
+      DeviceInstallationStore.getOrCreate(applicationContext)
     }
-    pairingCodeTextView.visibility = if (snapshot.pairingStatus == "paired") View.GONE else View.VISIBLE
-    pairingCodeTextView.text = if (snapshot.pairingCode.isBlank()) "--------" else snapshot.pairingCode
-    pairingDetailTextView.text = snapshot.pairingDetail
-    pairingDetailTextView.visibility = if (snapshot.pairingDetail.isBlank()) View.GONE else View.VISIBLE
+    pairingStatusTextView.text = if (snapshot.pairingStatus == "paired") "已绑定 Web 端" else "未绑定 Web 端"
+    pairingCodeTextView.visibility = View.VISIBLE
+    pairingCodeTextView.text = deviceIdForBinding
+    pairingCodeTextView.setOnClickListener {
+      val clipboardManager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+      clipboardManager.setPrimaryClip(ClipData.newPlainText("设备 ID", deviceIdForBinding))
+      Toast.makeText(this, R.string.pairing_id_copied, Toast.LENGTH_SHORT).show()
+    }
+    pairingDetailTextView.text = getString(R.string.pairing_detail_hint)
+    pairingDetailTextView.visibility = View.VISIBLE
     pairedClientTextView.text = snapshot.pairedClientSummary
     renderPairedClients(snapshot)
     deviceNameTextView.text = snapshot.deviceName.ifBlank { "Android Device" }

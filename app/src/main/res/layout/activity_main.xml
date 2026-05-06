@@ -185,12 +185,13 @@
             android:background="@drawable/token_surface"
             android:fontFamily="monospace"
             android:gravity="center"
-            android:letterSpacing="0.18"
+            android:letterSpacing="0.04"
             android:paddingTop="20dp"
             android:paddingBottom="20dp"
             android:text="--------"
             android:textColor="@color/text_primary"
-            android:textSize="34sp"
+            android:textIsSelectable="true"
+            android:textSize="18sp"
             android:textStyle="bold" />
 
           <TextView
