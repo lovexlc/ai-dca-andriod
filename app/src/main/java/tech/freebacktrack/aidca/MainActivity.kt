@@ -67,7 +67,6 @@ class MainActivity : Activity() {
   private lateinit var debugLogTextView: TextView
   private lateinit var copyDebugLogsButton: Button
   private lateinit var clearDebugLogsButton: Button
-  private lateinit var clearMessageHistoryButton: ImageButton
   private lateinit var deviceInfoToggleHeader: LinearLayout
   private lateinit var deviceInfoToggleChevron: TextView
   private lateinit var deviceAdvancedContainer: LinearLayout
@@ -76,7 +75,6 @@ class MainActivity : Activity() {
   private lateinit var barkPreviewItemsContainer: LinearLayout
   private lateinit var barkSelfTestButton: Button
   // 历史 tab action bar
-  private lateinit var historyFilterButton: ImageButton
   private lateinit var historySearchButton: ImageButton
   private lateinit var historySearchEditText: EditText
   private var historySearchQuery: String = ""
@@ -112,7 +110,6 @@ class MainActivity : Activity() {
     checkForUpdatesSilently()
     setupDebugActions()
     setupDeviceAdvancedToggle()
-    setupHistoryClearAction()
     setupHistoryActionBar()
     setupSettingsExtras()
     // 如果用户之前开过实时通道，启动时自动拉起 service（需设备已注册）。
@@ -189,14 +186,12 @@ class MainActivity : Activity() {
     debugLogTextView = findViewById(R.id.debugLogTextView)
     copyDebugLogsButton = findViewById(R.id.copyDebugLogsButton)
     clearDebugLogsButton = findViewById(R.id.clearDebugLogsButton)
-    clearMessageHistoryButton = findViewById(R.id.clearMessageHistoryButton)
     deviceInfoToggleHeader = findViewById(R.id.deviceInfoToggleHeader)
     deviceInfoToggleChevron = findViewById(R.id.deviceInfoToggleChevron)
     deviceAdvancedContainer = findViewById(R.id.deviceAdvancedContainer)
     barkPreviewContainer = findViewById(R.id.barkPreviewContainer)
     barkPreviewItemsContainer = findViewById(R.id.barkPreviewItemsContainer)
     barkSelfTestButton = findViewById(R.id.barkSelfTestButton)
-    historyFilterButton = findViewById(R.id.historyFilterButton)
     historySearchButton = findViewById(R.id.historySearchButton)
     historySearchEditText = findViewById(R.id.historySearchEditText)
     settingsExtrasContainer = findViewById(R.id.settingsExtrasContainer)
@@ -851,28 +846,8 @@ class MainActivity : Activity() {
     }
   }
 
-  private fun setupHistoryClearAction() {
-    clearMessageHistoryButton.setOnClickListener {
-      AlertDialog.Builder(this)
-        .setTitle(R.string.history_clear_confirm_title)
-        .setMessage(R.string.history_clear_confirm_message)
-        .setNegativeButton(R.string.action_cancel, null)
-        .setPositiveButton(R.string.action_confirm) { _, _ ->
-          NotificationMessageStore.clearAll(this)
-          Toast.makeText(this, R.string.history_cleared, Toast.LENGTH_SHORT).show()
-          renderMessageHistory()
-        }
-        .show()
-    }
-  }
-
-  // 历史 tab action bar：筛选 / 清空 / 搜索。
-  // 筛选 + 搜索本轮只放出按钮架子，点击提示“功能开发中”；清空复用原 setupHistoryClearAction 逻辑。
+  // 历史 tab 顶部只保留搜索按钮；删除/清空/导出 都交给条目长按菜单。
   private fun setupHistoryActionBar() {
-    val placeholder = View.OnClickListener {
-      Toast.makeText(this, R.string.feature_in_progress, Toast.LENGTH_SHORT).show()
-    }
-    historyFilterButton.setOnClickListener(placeholder)
     historySearchButton.setOnClickListener {
       val show = historySearchEditText.visibility != View.VISIBLE
       historySearchEditText.visibility = if (show) View.VISIBLE else View.GONE

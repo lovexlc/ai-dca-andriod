@@ -926,36 +926,14 @@
             android:textStyle="bold" />
 
           <ImageButton
-            android:id="@+id/historyFilterButton"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:layout_marginRight="4dp"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/history_filter_action"
-            android:padding="8dp"
-            android:scaleType="fitCenter"
-            android:src="@drawable/ic_trash" />
-
-          <ImageButton
-            android:id="@+id/clearMessageHistoryButton"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/history_clear_all"
-            android:padding="8dp"
-            android:scaleType="fitCenter"
-            android:src="@drawable/ic_trash" />
-
-          <ImageButton
             android:id="@+id/historySearchButton"
             android:layout_width="36dp"
             android:layout_height="36dp"
-            android:layout_marginLeft="4dp"
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/history_search_action"
             android:padding="8dp"
             android:scaleType="fitCenter"
-            android:src="@drawable/ic_trash" />
+            android:src="@android:drawable/ic_menu_search" />
         </LinearLayout>
 
         <EditText
