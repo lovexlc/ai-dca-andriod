@@ -95,4 +95,7 @@ dependencies {
   implementation("androidx.work:work-runtime-ktx:2.10.2")
   implementation(platform("com.google.firebase:firebase-bom:34.7.0"))
   implementation("com.google.firebase:firebase-messaging")
+  // OkHttp 提供 WebSocket 客户端，给 RealtimeChannelService（实时长连接通道）使用。
+  // 4.12.x 是当前 OkHttp 4 系列稳定线，支持 minSdk 21+，与现有 firebase-messaging 共存无冲突。
+  implementation("com.squareup.okhttp3:okhttp:4.12.0")
 }
