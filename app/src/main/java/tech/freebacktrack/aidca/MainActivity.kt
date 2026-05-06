@@ -15,6 +15,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowInsets
@@ -40,6 +41,7 @@ class MainActivity : Activity() {
   private lateinit var titleTextView: TextView
   private lateinit var appLogoView: android.widget.ImageView
   private lateinit var addServerButton: ImageButton
+  private lateinit var headerOnlineRow: LinearLayout
   private lateinit var pairingCardView: LinearLayout
   private lateinit var pairingStatusTextView: TextView
   private lateinit var pairingCodeTextView: TextView
@@ -162,6 +164,7 @@ class MainActivity : Activity() {
     titleTextView = findViewById(R.id.titleTextView)
     appLogoView = findViewById(R.id.appLogoView)
     addServerButton = findViewById(R.id.addServerButton)
+    headerOnlineRow = findViewById(R.id.headerOnlineRow)
     pairingCardView = findViewById(R.id.pairingCardView)
     pairingStatusTextView = findViewById(R.id.pairingStatusTextView)
     pairingCodeTextView = findViewById(R.id.pairingCodeTextView)
@@ -361,6 +364,7 @@ class MainActivity : Activity() {
       navServerButton.isSelected = true
       navHistoryButton.isSelected = false
       navSettingsButton.isSelected = false
+      applyHeaderForTab("server")
     }
 
     fun selectHistory() {
@@ -370,6 +374,7 @@ class MainActivity : Activity() {
       navServerButton.isSelected = false
       navHistoryButton.isSelected = true
       navSettingsButton.isSelected = false
+      applyHeaderForTab("history")
     }
 
     fun selectSettings() {
@@ -379,6 +384,7 @@ class MainActivity : Activity() {
       navServerButton.isSelected = false
       navHistoryButton.isSelected = false
       navSettingsButton.isSelected = true
+      applyHeaderForTab("settings")
     }
 
     navServerButton.setOnClickListener {
@@ -407,13 +413,45 @@ class MainActivity : Activity() {
 
   // ============ 服务器域名选择器（bark 风格） ============
   private fun setupServerToolbar() {
-    refreshServerTitle()
-    titleTextView.setOnClickListener { showServerPicker() }
     addServerButton.setOnClickListener { showAddServerDialog() }
+    applyHeaderForTab("server")
   }
 
   private fun refreshServerTitle() {
     titleTextView.text = ServerRegistry.currentHost(this)
+  }
+
+  /** Update the top header per current tab. Server tab → host + "+"; other tabs → plain title. */
+  private fun applyHeaderForTab(tab: String) {
+    when (tab) {
+      "server" -> {
+        titleTextView.text = ServerRegistry.currentHost(this)
+        titleTextView.setBackgroundResource(android.R.drawable.list_selector_background)
+        val tv = TypedValue()
+        theme.resolveAttribute(android.R.attr.selectableItemBackground, tv, true)
+        titleTextView.setBackgroundResource(tv.resourceId)
+        titleTextView.isClickable = true
+        titleTextView.setOnClickListener { showServerPicker() }
+        addServerButton.visibility = View.VISIBLE
+        headerOnlineRow.visibility = View.VISIBLE
+      }
+      "history" -> {
+        titleTextView.text = getString(R.string.nav_history)
+        titleTextView.background = null
+        titleTextView.setOnClickListener(null)
+        titleTextView.isClickable = false
+        addServerButton.visibility = View.GONE
+        headerOnlineRow.visibility = View.GONE
+      }
+      "settings" -> {
+        titleTextView.text = getString(R.string.nav_settings)
+        titleTextView.background = null
+        titleTextView.setOnClickListener(null)
+        titleTextView.isClickable = false
+        addServerButton.visibility = View.GONE
+        headerOnlineRow.visibility = View.GONE
+      }
+    }
   }
 
   private fun reloadServerDependentUi() {

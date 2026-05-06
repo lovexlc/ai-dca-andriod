@@ -36,7 +36,7 @@
   <string name="token_copied">Token 已复制</string>
   <string name="nav_history">消息</string>
   <string name="nav_settings">设备</string>
-  <string name="nav_server">状态</string>
+  <string name="nav_server">服务器</string>
   <string name="online_label">在线</string>
   <string name="advanced_label">高级</string>
   <string name="unpair_action">解绑</string>
