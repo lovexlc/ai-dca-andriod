@@ -803,8 +803,11 @@ class MainActivity : Activity() {
 
     // 推送铃声
     fun listRawSounds(): List<String> = try {
-      R.raw::class.java.fields.map { it.name }.sorted()
-    } catch (_: Exception) {
+      // 避免编译期直接引用 R.raw，res/raw/ 为空时 R.raw 嵌套类不会生成。
+      // 运行期反射查找，找不到返回空列表。
+      val rawClass = Class.forName("$packageName.R\$raw")
+      rawClass.fields.map { it.name }.sorted()
+    } catch (_: Throwable) {
       emptyList()
     }
     fun refreshRingtoneLabel() {
