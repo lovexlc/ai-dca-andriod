@@ -63,6 +63,14 @@
   <string name="bark_action_send">发送</string>
   <string name="bark_test_section_label">推送 URL 测试</string>
   <string name="bark_test_section_hint">复制以下 URL 在浏览器或终端调用即可触发推送</string>
+  <string name="bark_card_body_title">这里改成你自己的推送内容</string>
+  <string name="bark_card_body_hint">点击右上角按钮可以复制测试 URL、预览推送效果</string>
+  <string name="bark_card_title_body_title">推送标题\n这里改成你自己的推送内容</string>
+  <string name="bark_card_title_body_hint">推送标题的字号比推送内容粗一点</string>
+  <string name="bark_card_sound_title">推送铃声</string>
+  <string name="bark_card_sound_hint">可以为推送设置不同的铃声</string>
+  <string name="bark_card_call_title">持续响铃</string>
+  <string name="bark_card_call_hint">持续播放铃声约 30 秒，适合重要交易提醒</string>
   <string name="bark_url_copied">测试 URL 已复制</string>
   <string name="bark_send_success">测试推送已发送 (HTTP %1$d)</string>
   <string name="bark_send_failed">发送失败：%1$s</string>

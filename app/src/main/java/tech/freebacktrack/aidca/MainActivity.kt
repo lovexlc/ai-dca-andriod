@@ -854,18 +854,42 @@ class MainActivity : Activity() {
       URLEncoder.encode(s, "UTF-8").replace("+", "%20")
 
     val base = BuildConfig.NOTIFY_BASE_URL.trimEnd('/')
-    data class Item(val title: String, val url: String)
+    data class Item(val title: String, val url: String, val hint: String)
     val items = listOf(
-      Item("推送内容", "$base/quick/$key/${encodePath("这是一条测试推送")}"),
-      Item("推送标题 + 内容", "$base/quick/$key/${encodePath("推送标题")}/${encodePath("这是测试推送内容")}"),
-      Item("推送铃声", "$base/quick/$key/${encodePath("推送铃声")}?sound=alarm"),
-      Item("持续响铃", "$base/quick/$key/${encodePath("持续响铃")}?call=1"),
+      Item(
+        getString(R.string.bark_card_body_title),
+        "$base/quick/$key/${encodePath("这里改成你自己的推送内容")}",
+        getString(R.string.bark_card_body_hint),
+      ),
+      Item(
+        getString(R.string.bark_card_title_body_title),
+        "$base/quick/$key/${encodePath("推送标题")}/${encodePath("这里改成你自己的推送内容")}",
+        getString(R.string.bark_card_title_body_hint),
+      ),
+      Item(
+        getString(R.string.bark_card_sound_title),
+        "$base/quick/$key/${encodePath("推送铃声")}?sound=minuet",
+        getString(R.string.bark_card_sound_hint),
+      ),
+      Item(
+        getString(R.string.bark_card_call_title),
+        "$base/quick/$key/${encodePath("持续响铃")}?call=1",
+        getString(R.string.bark_card_call_hint),
+      ),
     )
 
     for (item in items) {
       val row = LayoutInflater.from(this).inflate(R.layout.item_bark_preview, barkPreviewItemsContainer, false)
       row.findViewById<TextView>(R.id.barkItemTitle).text = item.title
       row.findViewById<TextView>(R.id.barkItemUrl).text = item.url
+      row.findViewById<TextView>(R.id.barkItemHint).apply {
+        if (item.hint.isBlank()) {
+          visibility = View.GONE
+        } else {
+          text = item.hint
+          visibility = View.VISIBLE
+        }
+      }
       row.findViewById<TextView>(R.id.barkItemCopy).setOnClickListener {
         val clipboardManager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
         clipboardManager.setPrimaryClip(ClipData.newPlainText("推送 URL", item.url))
