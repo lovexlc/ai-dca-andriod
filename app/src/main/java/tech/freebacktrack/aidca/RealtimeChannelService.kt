@@ -262,7 +262,6 @@ class RealtimeChannelService : Service() {
       .setSmallIcon(android.R.drawable.stat_sys_data_bluetooth)
       .setContentTitle("推送连接保持中")
       .setOngoing(true)
-      .setSilent(true)
       .setContentIntent(pi)
       .build()
   }
