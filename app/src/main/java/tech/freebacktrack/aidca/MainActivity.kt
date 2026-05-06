@@ -38,6 +38,8 @@ import java.util.concurrent.Executors
 
 class MainActivity : Activity() {
   private lateinit var titleTextView: TextView
+  private lateinit var appLogoView: android.widget.ImageView
+  private lateinit var addServerButton: ImageButton
   private lateinit var pairingCardView: LinearLayout
   private lateinit var pairingStatusTextView: TextView
   private lateinit var pairingCodeTextView: TextView
@@ -112,6 +114,7 @@ class MainActivity : Activity() {
     setupDeviceAdvancedToggle()
     setupHistoryActionBar()
     setupSettingsExtras()
+    setupServerToolbar()
     // 如果用户之前开过实时通道，启动时自动拉起 service（需设备已注册）。
     if (getSharedPreferences("ai_dca_notify_state", Context.MODE_PRIVATE)
         .getBoolean("realtime_channel_enabled", false)) {
@@ -157,6 +160,8 @@ class MainActivity : Activity() {
 
   private fun bindViews() {
     titleTextView = findViewById(R.id.titleTextView)
+    appLogoView = findViewById(R.id.appLogoView)
+    addServerButton = findViewById(R.id.addServerButton)
     pairingCardView = findViewById(R.id.pairingCardView)
     pairingStatusTextView = findViewById(R.id.pairingStatusTextView)
     pairingCodeTextView = findViewById(R.id.pairingCodeTextView)
@@ -400,8 +405,102 @@ class MainActivity : Activity() {
     return findViewById(R.id.rootScrollView)
   }
 
+  // ============ 服务器域名选择器（bark 风格） ============
+  private fun setupServerToolbar() {
+    refreshServerTitle()
+    titleTextView.setOnClickListener { showServerPicker() }
+    addServerButton.setOnClickListener { showAddServerDialog() }
+  }
+
+  private fun refreshServerTitle() {
+    titleTextView.text = ServerRegistry.currentHost(this)
+  }
+
+  private fun reloadServerDependentUi() {
+    refreshServerTitle()
+    val identity = RegistrationRepository.currentIdentity(this)
+    val deviceId = identity.deviceInstallationId
+    if (deviceId.isNotBlank()) {
+      renderBarkPreviewCards(deviceId)
+    }
+  }
+
+  private fun showServerPicker() {
+    val hosts = ServerRegistry.list(this)
+    val current = ServerRegistry.selectedIndex(this)
+    val list = android.widget.ListView(this)
+    list.choiceMode = android.widget.ListView.CHOICE_MODE_SINGLE
+    list.adapter = android.widget.ArrayAdapter(
+      this,
+      android.R.layout.simple_list_item_single_choice,
+      hosts,
+    )
+    list.setItemChecked(current, true)
+    val dialog = AlertDialog.Builder(this)
+      .setTitle(R.string.server_picker_title)
+      .setView(list)
+      .setNegativeButton(R.string.action_cancel, null)
+      .show()
+    list.setOnItemClickListener { _, _, position, _ ->
+      ServerRegistry.select(this, position)
+      Toast.makeText(this, getString(R.string.server_switched, hosts[position]), Toast.LENGTH_SHORT).show()
+      reloadServerDependentUi()
+      dialog.dismiss()
+    }
+    list.setOnItemLongClickListener { _, _, position, _ ->
+      val host = hosts[position]
+      AlertDialog.Builder(this)
+        .setMessage(getString(R.string.server_remove_confirm, host))
+        .setPositiveButton(R.string.action_confirm) { _, _ ->
+          if (ServerRegistry.removeAt(this, position)) {
+            reloadServerDependentUi()
+            dialog.dismiss()
+          } else {
+            Toast.makeText(this, R.string.server_remove_blocked, Toast.LENGTH_SHORT).show()
+          }
+        }
+        .setNegativeButton(R.string.action_cancel, null)
+        .show()
+      true
+    }
+  }
+
+  private fun showAddServerDialog() {
+    val edit = EditText(this).apply {
+      hint = getString(R.string.server_add_hint)
+      inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_URI
+      setSingleLine(true)
+      val padPx = (resources.displayMetrics.density * 16).toInt()
+      setPadding(padPx, padPx / 2, padPx, padPx / 2)
+    }
+    val container = LinearLayout(this).apply {
+      orientation = LinearLayout.VERTICAL
+      val sidePx = (resources.displayMetrics.density * 12).toInt()
+      setPadding(sidePx, 0, sidePx, 0)
+      addView(edit, LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        LinearLayout.LayoutParams.WRAP_CONTENT,
+      ))
+    }
+    AlertDialog.Builder(this)
+      .setTitle(R.string.server_add_dialog_title)
+      .setView(container)
+      .setPositiveButton(R.string.server_add_save) { _, _ ->
+        val raw = edit.text?.toString().orEmpty()
+        val saved = ServerRegistry.addAndSelect(this, raw)
+        if (saved == null) {
+          Toast.makeText(this, R.string.server_add_invalid, Toast.LENGTH_SHORT).show()
+        } else {
+          Toast.makeText(this, getString(R.string.server_switched, saved), Toast.LENGTH_SHORT).show()
+          reloadServerDependentUi()
+        }
+      }
+      .setNegativeButton(R.string.action_cancel, null)
+      .show()
+  }
+
   private fun setupDebugToggle() {
-    titleTextView.setOnClickListener {
+    appLogoView.setOnClickListener {
       val nowMs = System.currentTimeMillis()
 
       if (nowMs - lastTitleTapAtMs > DEBUG_TAP_WINDOW_MS) {
@@ -435,6 +534,9 @@ class MainActivity : Activity() {
   }
 
   private fun setupDebugActions() {
+
+    // (server toolbar setup is hoisted into its own fn; see below)
+
     copyDebugLogsButton.setOnClickListener {
       val logText = DebugLogStore.readJoined(applicationContext).ifBlank {
         getString(R.string.debug_log_empty)
@@ -1040,32 +1142,40 @@ class MainActivity : Activity() {
     barkPreviewContainer.visibility = View.VISIBLE
     barkPreviewItemsContainer.removeAllViews()
 
-    // 一键自测: 本地走 BarkPayloadHandler.handle 返回一条通知，验证 channel/sound/UI 是否正常。
-    barkSelfTestButton.setOnClickListener {
-      val nowMs = System.currentTimeMillis()
-      val data = mapOf(
-        "title" to getString(R.string.app_name),
-        "body" to "这是一条本地自测通知·${nowMs % 100000}",
-        "sound" to "notification",
-        "level" to "active",
-      )
-      executor.execute {
-        runCatching {
-          BarkPayloadHandler.handle(
-            context = this,
-            rawData = data,
-            source = "self-test",
-            messageId = "self-test-$nowMs",
-          )
-        }
-      }
-      Toast.makeText(this, R.string.bark_self_test_toast, Toast.LENGTH_SHORT).show()
-    }
-
     fun encodePath(s: String): String =
       URLEncoder.encode(s, "UTF-8").replace("+", "%20")
 
-    val base = BuildConfig.NOTIFY_BASE_URL.trimEnd('/')
+    val base = ServerRegistry.currentApiBase(this).trimEnd('/')
+    val host = ServerRegistry.currentHost(this)
+
+    // “测试连通”：实际 GET 当前服务器 quick 接口，验证域名是否可达。
+    barkSelfTestButton.setOnClickListener {
+      val testUrl = "$base/quick/$key/${encodePath("测试连通")}"
+      Toast.makeText(this, getString(R.string.server_test_running, host), Toast.LENGTH_SHORT).show()
+      executor.execute {
+        var conn: HttpURLConnection? = null
+        try {
+          conn = (URL(testUrl).openConnection() as HttpURLConnection).apply {
+            requestMethod = "GET"
+            connectTimeout = 5000
+            readTimeout = 5000
+            setRequestProperty("user-agent", "ai-dca-android")
+          }
+          val code = conn.responseCode
+          mainHandler.post {
+            Toast.makeText(this, getString(R.string.server_test_ok, host, code), Toast.LENGTH_LONG).show()
+          }
+        } catch (e: Exception) {
+          val msg = e.message ?: e.javaClass.simpleName
+          mainHandler.post {
+            Toast.makeText(this, getString(R.string.server_test_fail, host, msg), Toast.LENGTH_LONG).show()
+          }
+        } finally {
+          try { conn?.disconnect() } catch (_: Exception) {}
+        }
+      }
+    }
+
     data class Item(val title: String, val url: String, val hint: String)
     val items = listOf(
       Item(

@@ -74,6 +74,21 @@
   <string name="bark_url_copied">测试 URL 已复制</string>
   <string name="bark_send_success">测试推送已发送 (HTTP %1$d)</string>
   <string name="bark_send_failed">发送失败：%1$s</string>
+  <!-- 服务器域名列表 (bark 风格) -->
+  <string name="server_picker_title">切换服务器</string>
+  <string name="server_picker_add">添加自定义服务器…</string>
+  <string name="server_picker_remove">删除</string>
+  <string name="server_add_dialog_title">添加服务器域名</string>
+  <string name="server_add_hint">tools.example.com</string>
+  <string name="server_add_invalid">域名格式不正确</string>
+  <string name="server_add_save">保存</string>
+  <string name="server_remove_blocked">至少要保留一个服务器</string>
+  <string name="server_remove_confirm">删除服务器 %1$s？</string>
+  <string name="server_switched">已切换到 %1$s</string>
+  <string name="server_test_running">正在测试 %1$s…</string>
+  <string name="server_test_ok">%1$s 连通 (HTTP %2$d)</string>
+  <string name="server_test_fail">%1$s 不通：%2$s</string>
+  <string name="server_add_button_desc">添加服务器</string>
   <!-- 历史 tab action bar -->
   <string name="history_filter_action">筛选</string>
   <string name="history_search_action">搜索</string>
