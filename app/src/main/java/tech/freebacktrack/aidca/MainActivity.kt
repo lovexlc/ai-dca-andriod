@@ -20,6 +20,8 @@ import android.view.View
 import android.view.WindowInsets
 import android.widget.Button
 import android.widget.EditText
+import android.text.Editable
+import android.text.TextWatcher
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -80,6 +82,8 @@ class MainActivity : Activity() {
   // 历史 tab action bar
   private lateinit var historyFilterButton: ImageButton
   private lateinit var historySearchButton: ImageButton
+  private lateinit var historySearchEditText: EditText
+  private var historySearchQuery: String = ""
   // 设置 tab 扩展
   private lateinit var settingsExtrasContainer: LinearLayout
   private lateinit var defaultArchiveRow: LinearLayout
@@ -202,6 +206,7 @@ class MainActivity : Activity() {
     barkSelfTestButton = findViewById(R.id.barkSelfTestButton)
     historyFilterButton = findViewById(R.id.historyFilterButton)
     historySearchButton = findViewById(R.id.historySearchButton)
+    historySearchEditText = findViewById(R.id.historySearchEditText)
     settingsExtrasContainer = findViewById(R.id.settingsExtrasContainer)
     defaultArchiveRow = findViewById(R.id.defaultArchiveRow)
     defaultArchiveSwitch = findViewById(R.id.defaultArchiveSwitch)
@@ -531,12 +536,21 @@ class MainActivity : Activity() {
   }
 
   private fun renderMessageHistory() {
-    val records = prioritizeMessages(NotificationMessageStore.readAll(this))
+    val all = prioritizeMessages(NotificationMessageStore.readAll(this))
+    val q = historySearchQuery.trim()
+    val records = if (q.isEmpty()) all else all.filter { r ->
+      r.title.contains(q, ignoreCase = true) ||
+        r.body.contains(q, ignoreCase = true) ||
+        r.bodyMd.contains(q, ignoreCase = true) ||
+        r.strategyName.contains(q, ignoreCase = true) ||
+        r.symbol.contains(q, ignoreCase = true)
+    }
     messageHistoryContainer.removeAllViews()
 
     if (records.isEmpty()) {
       val emptyView = TextView(this).apply {
-        text = getString(R.string.message_history_empty)
+        text = if (q.isEmpty()) getString(R.string.message_history_empty)
+        else getString(R.string.history_search_empty)
         setTextColor(getColor(R.color.slate_500))
         textSize = 13f
         setLineSpacing(0f, 1.2f)
@@ -545,7 +559,34 @@ class MainActivity : Activity() {
       return
     }
 
+    val df = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
+    val cal = java.util.Calendar.getInstance()
+    val today = df.format(cal.time)
+    cal.add(java.util.Calendar.DAY_OF_YEAR, -1)
+    val yesterday = df.format(cal.time)
+    var lastGroup = ""
     for (record in records.take(MAX_MESSAGE_RECORDS)) {
+      val day = if (record.receivedAt.length >= 10) record.receivedAt.substring(0, 10) else ""
+      val group = when (day) {
+        today -> "today"
+        yesterday -> "yesterday"
+        else -> "earlier"
+      }
+      if (group != lastGroup) {
+        lastGroup = group
+        val labelRes = when (group) {
+          "today" -> R.string.history_group_today
+          "yesterday" -> R.string.history_group_yesterday
+          else -> R.string.history_group_earlier
+        }
+        val header = TextView(this).apply {
+          text = getString(labelRes)
+          setTextColor(getColor(R.color.slate_500))
+          textSize = 12f
+          setPadding(0, if (messageHistoryContainer.childCount == 0) 0 else 16, 0, 4)
+        }
+        messageHistoryContainer.addView(header)
+      }
       val itemView = LayoutInflater.from(this).inflate(R.layout.item_message_record, messageHistoryContainer, false)
       val titleView = itemView.findViewById<TextView>(R.id.messageTitleTextView)
       val metaView = itemView.findViewById<TextView>(R.id.messageMetaTextView)
@@ -857,7 +898,25 @@ class MainActivity : Activity() {
       Toast.makeText(this, R.string.feature_in_progress, Toast.LENGTH_SHORT).show()
     }
     historyFilterButton.setOnClickListener(placeholder)
-    historySearchButton.setOnClickListener(placeholder)
+    historySearchButton.setOnClickListener {
+      val show = historySearchEditText.visibility != View.VISIBLE
+      historySearchEditText.visibility = if (show) View.VISIBLE else View.GONE
+      if (show) {
+        historySearchEditText.requestFocus()
+      } else {
+        historySearchEditText.setText("")
+        historySearchQuery = ""
+        renderMessageHistory()
+      }
+    }
+    historySearchEditText.addTextChangedListener(object : TextWatcher {
+      override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+      override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+      override fun afterTextChanged(s: Editable?) {
+        historySearchQuery = s?.toString().orEmpty()
+        renderMessageHistory()
+      }
+    })
   }
 
   // 设置 tab 扩展：默认保存 / 加密密钥 / 推送铃声。

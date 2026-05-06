@@ -1022,6 +1022,19 @@
             android:src="@drawable/ic_trash" />
         </LinearLayout>
 
+        <EditText
+          android:id="@+id/historySearchEditText"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:layout_marginTop="8dp"
+          android:hint="@string/history_search_hint"
+          android:inputType="text"
+          android:maxLines="1"
+          android:padding="10dp"
+          android:singleLine="true"
+          android:textSize="14sp"
+          android:visibility="gone" />
+
         <LinearLayout
           android:id="@+id/messageHistoryContainer"
           android:layout_width="match_parent"

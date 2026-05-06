@@ -130,4 +130,9 @@
   <string name="message_clear_all_confirm">确认清空所有历史消息？</string>
   <string name="message_history_cleared">已清空全部消息</string>
   <string name="message_export_copied">已导出 %1$d 条消息到剪贴板</string>
+  <string name="history_search_hint">搜索标题或正文…</string>
+  <string name="history_group_today">今天</string>
+  <string name="history_group_yesterday">昨天</string>
+  <string name="history_group_earlier">更早</string>
+  <string name="history_search_empty">没有匹配的消息</string>
 </resources>
