@@ -119,4 +119,6 @@
   <string name="settings_dnd_channel_subtitle">为 critical 通道打开“叿越勿扰”，确保 level=critical 可响</string>
   <string name="settings_dnd_channel_action">去设置</string>
   <string name="settings_dnd_channel_open_failed">未能打开系统设置，请手动到 设置 · 通知 中调整</string>
+  <string name="bark_self_test_button">一键自测</string>
+  <string name="bark_self_test_toast">已发送本地自测通知，请看状态栏</string>
 </resources>

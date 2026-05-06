@@ -76,6 +76,7 @@ class MainActivity : Activity() {
   // Bark 测试推送预览卡
   private lateinit var barkPreviewContainer: LinearLayout
   private lateinit var barkPreviewItemsContainer: LinearLayout
+  private lateinit var barkSelfTestButton: Button
   // 历史 tab action bar
   private lateinit var historyFilterButton: ImageButton
   private lateinit var historySearchButton: ImageButton
@@ -198,6 +199,7 @@ class MainActivity : Activity() {
     deviceAdvancedContainer = findViewById(R.id.deviceAdvancedContainer)
     barkPreviewContainer = findViewById(R.id.barkPreviewContainer)
     barkPreviewItemsContainer = findViewById(R.id.barkPreviewItemsContainer)
+    barkSelfTestButton = findViewById(R.id.barkSelfTestButton)
     historyFilterButton = findViewById(R.id.historyFilterButton)
     historySearchButton = findViewById(R.id.historySearchButton)
     settingsExtrasContainer = findViewById(R.id.settingsExtrasContainer)
@@ -949,6 +951,28 @@ class MainActivity : Activity() {
     }
     barkPreviewContainer.visibility = View.VISIBLE
     barkPreviewItemsContainer.removeAllViews()
+
+    // 一键自测: 本地走 BarkPayloadHandler.handle 返回一条通知，验证 channel/sound/UI 是否正常。
+    barkSelfTestButton.setOnClickListener {
+      val nowMs = System.currentTimeMillis()
+      val data = mapOf(
+        "title" to getString(R.string.app_name),
+        "body" to "这是一条本地自测通知·${nowMs % 100000}",
+        "sound" to "notification",
+        "level" to "active",
+      )
+      executor.execute {
+        runCatching {
+          BarkPayloadHandler.handle(
+            context = this,
+            rawData = data,
+            source = "self-test",
+            messageId = "self-test-$nowMs",
+          )
+        }
+      }
+      Toast.makeText(this, R.string.bark_self_test_toast, Toast.LENGTH_SHORT).show()
+    }
 
     fun encodePath(s: String): String =
       URLEncoder.encode(s, "UTF-8").replace("+", "%20")
