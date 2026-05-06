@@ -568,6 +568,10 @@ class MainActivity : Activity() {
           }
           .show()
       }
+      itemView.setOnLongClickListener {
+        showMessageActionsDialog(record)
+        true
+      }
       detailContainer.visibility = View.GONE
       expandChevron.rotation = 0f
       headerRow.setOnClickListener {
@@ -635,6 +639,81 @@ class MainActivity : Activity() {
       }
 
       messageHistoryContainer.addView(itemView)
+    }
+  }
+
+  // 历史 tab 长按菜单: 复制单条 JSON / 删除单条 / 清空全部 / 导出全部 JSON
+  private fun showMessageActionsDialog(record: NotificationMessageRecord) {
+    val labels = arrayOf(
+      getString(R.string.message_action_copy_json),
+      getString(R.string.message_action_delete),
+      getString(R.string.message_action_clear_all),
+      getString(R.string.message_action_export_all),
+    )
+    AlertDialog.Builder(this)
+      .setTitle(R.string.message_long_press_title)
+      .setItems(labels) { _, which ->
+        when (which) {
+          0 -> {
+            val json = recordToJson(record).toString(2)
+            copyTextToClipboard("message json", json)
+            Toast.makeText(this, R.string.message_json_copied, Toast.LENGTH_SHORT).show()
+          }
+          1 -> {
+            if (NotificationMessageStore.removeByLocalId(this, record.localId)) {
+              Toast.makeText(this, R.string.message_deleted, Toast.LENGTH_SHORT).show()
+              renderMessageHistory()
+            }
+          }
+          2 -> {
+            AlertDialog.Builder(this)
+              .setMessage(R.string.message_clear_all_confirm)
+              .setNegativeButton(R.string.action_cancel, null)
+              .setPositiveButton(R.string.action_confirm) { _, _ ->
+                NotificationMessageStore.clearAll(this)
+                Toast.makeText(this, R.string.message_history_cleared, Toast.LENGTH_SHORT).show()
+                renderMessageHistory()
+              }
+              .show()
+          }
+          3 -> {
+            val all = NotificationMessageStore.readAll(this)
+            val arr = JSONArray()
+            for (r in all) arr.put(recordToJson(r))
+            copyTextToClipboard("messages json", arr.toString(2))
+            Toast.makeText(
+              this,
+              getString(R.string.message_export_copied, all.size),
+              Toast.LENGTH_SHORT,
+            ).show()
+          }
+        }
+      }
+      .show()
+  }
+
+  private fun recordToJson(record: NotificationMessageRecord): JSONObject =
+    JSONObject()
+      .put("localId", record.localId)
+      .put("eventId", record.eventId)
+      .put("messageId", record.messageId)
+      .put("eventType", record.eventType)
+      .put("receivedAt", record.receivedAt)
+      .put("title", record.title)
+      .put("body", record.body)
+      .put("bodyMd", record.bodyMd)
+      .put("triggerCondition", record.triggerCondition)
+      .put("purchaseAmount", record.purchaseAmount)
+      .put("detailUrl", record.detailUrl)
+      .put("symbol", record.symbol)
+      .put("strategyName", record.strategyName)
+      .put("notificationStatus", record.notificationStatus)
+      .put("notificationError", record.notificationError)
+
+  private fun copyTextToClipboard(label: String, text: String) {
+    runCatching {
+      val cm = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+      cm.setPrimaryClip(ClipData.newPlainText(label, text))
     }
   }
 
