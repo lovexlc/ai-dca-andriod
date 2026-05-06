@@ -115,4 +115,8 @@
   <string name="sound_library_dialog_title">内置铃声</string>
   <string name="sound_library_preview_toast">试听：%1$s</string>
   <string name="sound_library_copy_toast">已复制：sound=%1$s</string>
+  <string name="settings_dnd_channel_label">勿扰穿透</string>
+  <string name="settings_dnd_channel_subtitle">为 critical 通道打开“叿越勿扰”，确保 level=critical 可响</string>
+  <string name="settings_dnd_channel_action">去设置</string>
+  <string name="settings_dnd_channel_open_failed">未能打开系统设置，请手动到 设置 · 通知 中调整</string>
 </resources>

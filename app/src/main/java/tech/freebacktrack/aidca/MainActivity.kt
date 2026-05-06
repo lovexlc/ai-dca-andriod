@@ -92,6 +92,7 @@ class MainActivity : Activity() {
   private lateinit var encryptionKeyStatus: TextView
   private lateinit var ringtoneRow: LinearLayout
   private lateinit var ringtoneCurrentValue: TextView
+  private lateinit var dndChannelRow: LinearLayout
   private var titleTapCount = 0
   private var lastTitleTapAtMs = 0L
   private val executor = Executors.newSingleThreadExecutor()
@@ -211,6 +212,7 @@ class MainActivity : Activity() {
     encryptionKeyStatus = findViewById(R.id.encryptionKeyStatus)
     ringtoneRow = findViewById(R.id.ringtoneRow)
     ringtoneCurrentValue = findViewById(R.id.ringtoneCurrentValue)
+    dndChannelRow = findViewById(R.id.dndChannelRow)
   }
 
   // targetSdk 35 强制 edge-to-edge 时，状态栏会覆盖内容；用 WindowInsets 显式吸收 systemBars
@@ -823,6 +825,34 @@ class MainActivity : Activity() {
       if (!ok) {
         KeepaliveHelper.openAppDetailsSettings(this)
         Toast.makeText(this, R.string.settings_keepalive_unsupported, Toast.LENGTH_SHORT).show()
+      }
+    }
+    dndChannelRow.setOnClickListener {
+      // 先确保 critical channel 已创建，避免跳转后系统页找不到。
+      val channelId = NotifyMessagingService.ensureChannel(this, "critical", "", false)
+      val opened = runCatching {
+        if (Build.VERSION.SDK_INT >= 26) {
+          val intent = Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
+            .putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+            .putExtra(Settings.EXTRA_CHANNEL_ID, channelId)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+          startActivity(intent)
+          true
+        } else {
+          false
+        }
+      }.getOrDefault(false)
+      if (!opened) {
+        val fallback = runCatching {
+          val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+            .putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+          startActivity(intent)
+          true
+        }.getOrDefault(false)
+        if (!fallback) {
+          Toast.makeText(this, R.string.settings_dnd_channel_open_failed, Toast.LENGTH_LONG).show()
+        }
       }
     }
 

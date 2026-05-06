@@ -493,6 +493,49 @@
           </LinearLayout>
 
           <LinearLayout
+            android:id="@+id/dndChannelRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?android:attr/selectableItemBackground"
+            android:gravity="center_vertical"
+            android:minHeight="48dp"
+            android:orientation="horizontal"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
+
+            <LinearLayout
+              android:layout_width="0dp"
+              android:layout_height="wrap_content"
+              android:layout_weight="1"
+              android:orientation="vertical">
+
+              <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_dnd_channel_label"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp" />
+
+              <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:lineSpacingExtra="1dp"
+                android:text="@string/settings_dnd_channel_subtitle"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+            </LinearLayout>
+
+            <TextView
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:layout_marginLeft="12dp"
+              android:text="@string/settings_dnd_channel_action"
+              android:textColor="@color/text_secondary"
+              android:textSize="13sp" />
+          </LinearLayout>
+
+          <LinearLayout
             android:id="@+id/encryptionKeyRow"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
