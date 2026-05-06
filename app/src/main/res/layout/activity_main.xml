@@ -249,7 +249,7 @@
           </LinearLayout>
         </LinearLayout>
 
-        <!-- ============ Bark 测试推送预览卡 ============ -->
+        <!-- ============ 推送 URL 测试预览卡 ============ -->
         <LinearLayout
           android:id="@+id/barkPreviewContainer"
           android:layout_width="match_parent"

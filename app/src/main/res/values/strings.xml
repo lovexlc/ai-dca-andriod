@@ -56,10 +56,10 @@
   <string name="dnd_bypass_skip">以后再说</string>
   <string name="dnd_bypass_unsupported">当前系统不支持勿扰旁路设置</string>
   <string name="dnd_bypass_route_failed">无法打开勿扰权限设置页：%1$s</string>
-  <!-- Bark 测试推送预览卡 (服务器 tab) -->
+  <!-- 推送 URL 测试预览卡 (服务器 tab) -->
   <string name="bark_action_copy">复制</string>
   <string name="bark_action_send">发送</string>
-  <string name="bark_test_section_label">Bark 测试推送</string>
+  <string name="bark_test_section_label">推送 URL 测试</string>
   <string name="bark_test_section_hint">复制以下 URL 在浏览器或终端调用即可触发推送</string>
   <string name="bark_url_copied">测试 URL 已复制</string>
   <string name="bark_send_success">测试推送已发送 (HTTP %1$d)</string>
@@ -70,7 +70,7 @@
   <string name="feature_in_progress">功能开发中</string>
   <!-- 设置 tab 历史消息 / 加密 / 铃声 -->
   <string name="settings_history_section">历史消息</string>
-  <string name="settings_bark_section">Bark 推送</string>
+  <string name="settings_bark_section">推送接入设置</string>
   <string name="settings_default_archive_label">默认保存</string>
   <string name="settings_default_archive_subtitle">推送 URL 没有指定 isArchive 参数时使用此设置</string>
   <string name="settings_encryption_key_label">加密密钥</string>

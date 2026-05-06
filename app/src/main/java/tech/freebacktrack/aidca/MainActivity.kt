@@ -838,7 +838,7 @@ class MainActivity : Activity() {
     }
   }
 
-  // 服务器 tab Bark 测试 URL 预览卡。
+  // 服务器 tab 推送 URL 测试预览卡。
   private fun renderBarkPreviewCards(deviceInstallationId: String) {
     val key = deviceInstallationId.trim()
     if (key.isBlank()) {
@@ -854,10 +854,10 @@ class MainActivity : Activity() {
     val base = BuildConfig.NOTIFY_BASE_URL.trimEnd('/')
     data class Item(val title: String, val url: String)
     val items = listOf(
-      Item("推送内容", "$base/bark/$key/${encodePath("这是一条测试推送")}"),
-      Item("推送标题 + 内容", "$base/bark/$key/${encodePath("推送标题")}/${encodePath("这是测试推送内容")}"),
-      Item("推送铃声", "$base/bark/$key/${encodePath("推送铃声")}?sound=alarm"),
-      Item("持续响铃", "$base/bark/$key/${encodePath("持续响铃")}?call=1"),
+      Item("推送内容", "$base/quick/$key/${encodePath("这是一条测试推送")}"),
+      Item("推送标题 + 内容", "$base/quick/$key/${encodePath("推送标题")}/${encodePath("这是测试推送内容")}"),
+      Item("推送铃声", "$base/quick/$key/${encodePath("推送铃声")}?sound=alarm"),
+      Item("持续响铃", "$base/quick/$key/${encodePath("持续响铃")}?call=1"),
     )
 
     for (item in items) {
@@ -866,7 +866,7 @@ class MainActivity : Activity() {
       row.findViewById<TextView>(R.id.barkItemUrl).text = item.url
       row.findViewById<TextView>(R.id.barkItemCopy).setOnClickListener {
         val clipboardManager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-        clipboardManager.setPrimaryClip(ClipData.newPlainText("Bark URL", item.url))
+        clipboardManager.setPrimaryClip(ClipData.newPlainText("推送 URL", item.url))
         Toast.makeText(this, R.string.bark_url_copied, Toast.LENGTH_SHORT).show()
       }
       row.findViewById<TextView>(R.id.barkItemSend).setOnClickListener {
