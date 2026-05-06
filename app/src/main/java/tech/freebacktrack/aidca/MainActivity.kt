@@ -875,19 +875,36 @@ class MainActivity : Activity() {
     }
     refreshRingtoneLabel()
     ringtoneRow.setOnClickListener {
-      val raws = listRawSounds()
+      val entries = SoundLibrary.list(this)
       val labels = mutableListOf(getString(R.string.settings_ringtone_subtitle_default))
-      labels.addAll(raws)
+      labels.addAll(entries.map { it.displayName })
       val current = prefs.getString("selected_ringtone", "").orEmpty()
-      val checkedIndex = if (current.isBlank()) 0 else (raws.indexOf(current).let { if (it >= 0) it + 1 else 0 })
+      val checkedIndex = if (current.isBlank()) {
+        0
+      } else {
+        entries.indexOfFirst { it.name == current }.let { if (it < 0) 0 else it + 1 }
+      }
       AlertDialog.Builder(this)
-        .setTitle(R.string.settings_ringtone_dialog_title)
-        .setSingleChoiceItems(labels.toTypedArray(), checkedIndex) { dialog, which ->
-          val picked = if (which == 0) "" else (raws.getOrNull(which - 1) ?: "")
-          prefs.edit().putString("selected_ringtone", picked).apply()
-          refreshRingtoneLabel()
-          dialog.dismiss()
+        .setTitle(R.string.sound_library_dialog_title)
+        .setSingleChoiceItems(labels.toTypedArray(), checkedIndex) { _, which ->
+          if (which == 0) {
+            SoundLibrary.stop()
+            prefs.edit().putString("selected_ringtone", "").apply()
+            refreshRingtoneLabel()
+          } else {
+            val entry = entries[which - 1]
+            SoundLibrary.preview(this, entry)
+            SoundLibrary.copySoundName(this, entry.name)
+            prefs.edit().putString("selected_ringtone", entry.name).apply()
+            refreshRingtoneLabel()
+            Toast.makeText(
+              this,
+              getString(R.string.sound_library_preview_toast, entry.name),
+              Toast.LENGTH_SHORT,
+            ).show()
+          }
         }
+        .setOnDismissListener { SoundLibrary.stop() }
         .setNegativeButton(R.string.action_cancel, null)
         .show()
     }
