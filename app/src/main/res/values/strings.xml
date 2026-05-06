@@ -93,4 +93,10 @@
   <string name="settings_ringtone_label">推送铃声</string>
   <string name="settings_ringtone_subtitle_default">默认</string>
   <string name="settings_ringtone_dialog_title">选择推送铃声</string>
+  <!-- 实时通道（实验） -->
+  <string name="settings_realtime_channel_label">实时通道（实验）</string>
+  <string name="settings_realtime_channel_subtitle">保持 WebSocket 长连接，FCM 之外加一路实时推送</string>
+  <string name="settings_realtime_channel_need_pair">需要先完成设备注册才能启用</string>
+  <string name="settings_realtime_channel_started">实时通道已启用</string>
+  <string name="settings_realtime_channel_stopped">实时通道已关闭</string>
 </resources>

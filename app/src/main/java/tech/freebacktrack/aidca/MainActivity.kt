@@ -26,6 +26,7 @@ import android.widget.ScrollView
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
+import com.google.firebase.messaging.FirebaseMessaging
 import org.json.JSONObject
 import org.json.JSONArray
 import java.net.HttpURLConnection
@@ -82,6 +83,8 @@ class MainActivity : Activity() {
   private lateinit var settingsExtrasContainer: LinearLayout
   private lateinit var defaultArchiveRow: LinearLayout
   private lateinit var defaultArchiveSwitch: Switch
+  private lateinit var realtimeChannelRow: LinearLayout
+  private lateinit var realtimeChannelSwitch: Switch
   private lateinit var encryptionKeyRow: LinearLayout
   private lateinit var encryptionKeyStatus: TextView
   private lateinit var ringtoneRow: LinearLayout
@@ -107,6 +110,11 @@ class MainActivity : Activity() {
     setupHistoryClearAction()
     setupHistoryActionBar()
     setupSettingsExtras()
+    // 如果用户之前开过实时通道，启动时自动拉起 service（需设备已注册）。
+    if (getSharedPreferences("ai_dca_notify_state", Context.MODE_PRIVATE)
+        .getBoolean("realtime_channel_enabled", false)) {
+      startRealtimeChannelIfPossible(showToast = false)
+    }
     DebugLogStore.append(applicationContext, "ui", "MainActivity onCreate")
 
     val identity = RegistrationRepository.currentIdentity(this)
@@ -188,6 +196,8 @@ class MainActivity : Activity() {
     settingsExtrasContainer = findViewById(R.id.settingsExtrasContainer)
     defaultArchiveRow = findViewById(R.id.defaultArchiveRow)
     defaultArchiveSwitch = findViewById(R.id.defaultArchiveSwitch)
+    realtimeChannelRow = findViewById(R.id.realtimeChannelRow)
+    realtimeChannelSwitch = findViewById(R.id.realtimeChannelSwitch)
     encryptionKeyRow = findViewById(R.id.encryptionKeyRow)
     encryptionKeyStatus = findViewById(R.id.encryptionKeyStatus)
     ringtoneRow = findViewById(R.id.ringtoneRow)
@@ -773,6 +783,23 @@ class MainActivity : Activity() {
       defaultArchiveSwitch.toggle()
     }
 
+    // 实时通道（实验）开关。FCM 之外多开一路 WebSocket 长连接。
+    // 默认关闭：需要设备已注册（拿到 deviceInstallationId 与 FCM token）才能启用。
+    val realtimeEnabled = prefs.getBoolean("realtime_channel_enabled", false)
+    realtimeChannelSwitch.isChecked = realtimeEnabled
+    realtimeChannelSwitch.setOnCheckedChangeListener { _, isChecked ->
+      prefs.edit().putBoolean("realtime_channel_enabled", isChecked).apply()
+      if (isChecked) {
+        startRealtimeChannelIfPossible(showToast = true)
+      } else {
+        RealtimeChannelService.stop(this)
+        Toast.makeText(this, R.string.settings_realtime_channel_stopped, Toast.LENGTH_SHORT).show()
+      }
+    }
+    realtimeChannelRow.setOnClickListener {
+      realtimeChannelSwitch.toggle()
+    }
+
     // 加密密钥
     fun refreshEncryptionKeyStatus() {
       val key = prefs.getString("encryption_key", "").orEmpty()
@@ -981,6 +1008,32 @@ class MainActivity : Activity() {
       }
       pairedClientItemsContainer.addView(row)
     }
+  }
+
+  private fun startRealtimeChannelIfPossible(showToast: Boolean) {
+    val devId = DeviceInstallationStore.getOrCreate(applicationContext)
+    if (devId.isBlank()) {
+      if (showToast) {
+        Toast.makeText(this, R.string.settings_realtime_channel_need_pair, Toast.LENGTH_SHORT).show()
+      }
+      return
+    }
+    FirebaseMessaging.getInstance().token
+      .addOnSuccessListener { token ->
+        if (!token.isNullOrBlank()) {
+          RealtimeChannelService.start(this, devId, token)
+          if (showToast) {
+            Toast.makeText(this, R.string.settings_realtime_channel_started, Toast.LENGTH_SHORT).show()
+          }
+        } else if (showToast) {
+          Toast.makeText(this, R.string.settings_realtime_channel_need_pair, Toast.LENGTH_SHORT).show()
+        }
+      }
+      .addOnFailureListener {
+        if (showToast) {
+          Toast.makeText(this, R.string.settings_realtime_channel_need_pair, Toast.LENGTH_SHORT).show()
+        }
+      }
   }
 
   private data class BadgeStyle(
