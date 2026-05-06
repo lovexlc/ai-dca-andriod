@@ -142,6 +142,14 @@ object BarkPayloadHandler {
       val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
       nm.notify(notificationId(eventId, messageId), notification)
       if (isArchive) NotificationMessageStore.markDisplayed(ctx, eventId, messageId)
+      if (callMode) {
+        try {
+          CallRingService.start(ctx, title, expandedBody)
+          DebugLogStore.append(ctx, "call", "call=1 ring service started for ${messageId.ifBlank { "-" }}")
+        } catch (e: Exception) {
+          DebugLogStore.append(ctx, "call", "call=1 ring service failed: ${e.message ?: "未知错误"}")
+        }
+      }
       DebugLogStore.append(
         ctx,
         "notify",

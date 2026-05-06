@@ -107,4 +107,9 @@
   <string name="settings_keepalive_autostart_subtitle">跳转到厂商设置，允许后台运行与自启动</string>
   <string name="settings_keepalive_open">去设置</string>
   <string name="settings_keepalive_unsupported">本机未实现专用入口，已打开应用详情</string>
+  <string name="call_ring_channel_name">持续响铃</string>
+  <string name="call_ring_channel_desc">Bark call=1 持续响铃的前台服务提示</string>
+  <string name="call_ring_default_title">推送响铃中</string>
+  <string name="call_ring_default_body">点击“停止响铃”或返回应用可终止</string>
+  <string name="call_ring_stop">停止响铃</string>
 </resources>

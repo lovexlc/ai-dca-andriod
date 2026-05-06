@@ -12,6 +12,8 @@
   <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
   <!-- 保活引导：请求加入电池优化白名单。 -->
   <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+  <!-- call=1 持续响铃需要振动。 -->
+  <uses-permission android:name="android.permission.VIBRATE" />
   <!-- 查询 / 跳转到可见的应用设置页、发送隐式 Intent 到其他 OEM 设置中心 (如零权限启动、自启动管理)。 -->
   <queries>
     <intent>
@@ -56,6 +58,12 @@
     <!-- 实时 WebSocket 长连接服务。骨架阶段不会被启动，为后续接入预留。 -->
     <service
       android:name=".RealtimeChannelService"
+      android:exported="false"
+      android:foregroundServiceType="dataSync" />
+
+    <!-- Bark 风 call=1 持续响铃服务。 -->
+    <service
+      android:name=".CallRingService"
       android:exported="false"
       android:foregroundServiceType="dataSync" />
   </application>
