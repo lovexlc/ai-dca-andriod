@@ -157,15 +157,6 @@
             android:textSize="18sp"
             android:textStyle="bold" />
 
-          <TextView
-            android:id="@+id/pairingDetailTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:lineSpacingExtra="3dp"
-            android:textColor="@color/text_secondary"
-            android:textSize="13sp" />
-
           <LinearLayout
             android:id="@+id/pairedClientContainerView"
             android:layout_width="match_parent"

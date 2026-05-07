@@ -45,7 +45,6 @@ class MainActivity : Activity() {
   private lateinit var pairingCardView: LinearLayout
   private lateinit var pairingStatusTextView: TextView
   private lateinit var pairingCodeTextView: TextView
-  private lateinit var pairingDetailTextView: TextView
   private lateinit var pairedClientContainerView: LinearLayout
   private lateinit var pairedClientTextView: TextView
   private lateinit var pairedClientItemsContainer: LinearLayout
@@ -168,7 +167,6 @@ class MainActivity : Activity() {
     pairingCardView = findViewById(R.id.pairingCardView)
     pairingStatusTextView = findViewById(R.id.pairingStatusTextView)
     pairingCodeTextView = findViewById(R.id.pairingCodeTextView)
-    pairingDetailTextView = findViewById(R.id.pairingDetailTextView)
     pairedClientContainerView = findViewById(R.id.pairedClientContainerView)
     pairedClientTextView = findViewById(R.id.pairedClientTextView)
     pairedClientItemsContainer = findViewById(R.id.pairedClientItemsContainer)
@@ -632,8 +630,6 @@ class MainActivity : Activity() {
       clipboardManager.setPrimaryClip(ClipData.newPlainText("设备 ID", deviceIdForBinding))
       Toast.makeText(this, R.string.pairing_id_copied, Toast.LENGTH_SHORT).show()
     }
-    pairingDetailTextView.text = getString(R.string.pairing_detail_hint)
-    pairingDetailTextView.visibility = View.VISIBLE
     pairedClientTextView.text = snapshot.pairedClientSummary
     renderPairedClients(snapshot)
     deviceNameTextView.text = snapshot.deviceName.ifBlank { "Android Device" }
