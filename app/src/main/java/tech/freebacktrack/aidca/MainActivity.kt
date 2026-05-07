@@ -622,7 +622,7 @@ class MainActivity : Activity() {
     val deviceIdForBinding = snapshot.deviceInstallationId.ifBlank {
       DeviceInstallationStore.getOrCreate(applicationContext)
     }
-    pairingStatusTextView.text = if (snapshot.pairingStatus == "paired") "已绑定 Web 端" else "未绑定 Web 端"
+    pairingStatusTextView.text = if (snapshot.pairingStatus == "paired") "已绑定" else "未绑定"
     pairingCodeTextView.visibility = View.VISIBLE
     pairingCodeTextView.text = deviceIdForBinding
     pairingCodeTextView.setOnClickListener {
