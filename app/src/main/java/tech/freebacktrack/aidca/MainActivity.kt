@@ -87,15 +87,10 @@ class MainActivity : Activity() {
   private lateinit var defaultArchiveSwitch: Switch
   private lateinit var realtimeChannelRow: LinearLayout
   private lateinit var realtimeChannelSwitch: Switch
-  private lateinit var keepaliveBatteryRow: LinearLayout
-  private lateinit var keepaliveBatteryStatus: TextView
-  private lateinit var keepaliveAutostartRow: LinearLayout
-  private lateinit var keepaliveDivider: View
   private lateinit var encryptionKeyRow: LinearLayout
   private lateinit var encryptionKeyStatus: TextView
   private lateinit var ringtoneRow: LinearLayout
   private lateinit var ringtoneCurrentValue: TextView
-  private lateinit var dndChannelRow: LinearLayout
   private var titleTapCount = 0
   private var lastTitleTapAtMs = 0L
   private val executor = Executors.newSingleThreadExecutor()
@@ -129,7 +124,6 @@ class MainActivity : Activity() {
     renderMessageHistory()
     renderDebugPanel()
     requestNotificationPermissionIfNeeded()
-    requestDndAccessIfNeeded()
 
     startRegistration("app-launch")
   }
@@ -155,9 +149,6 @@ class MainActivity : Activity() {
     super.onResume()
     renderMessageHistory()
     renderDebugPanel()
-    if (::keepaliveBatteryStatus.isInitialized) {
-      refreshKeepaliveStatus()
-    }
   }
 
   private fun bindViews() {
@@ -206,15 +197,10 @@ class MainActivity : Activity() {
     defaultArchiveSwitch = findViewById(R.id.defaultArchiveSwitch)
     realtimeChannelRow = findViewById(R.id.realtimeChannelRow)
     realtimeChannelSwitch = findViewById(R.id.realtimeChannelSwitch)
-    keepaliveBatteryRow = findViewById(R.id.keepaliveBatteryRow)
-    keepaliveBatteryStatus = findViewById(R.id.keepaliveBatteryStatus)
-    keepaliveAutostartRow = findViewById(R.id.keepaliveAutostartRow)
-    keepaliveDivider = findViewById(R.id.keepaliveDivider)
     encryptionKeyRow = findViewById(R.id.encryptionKeyRow)
     encryptionKeyStatus = findViewById(R.id.encryptionKeyStatus)
     ringtoneRow = findViewById(R.id.ringtoneRow)
     ringtoneCurrentValue = findViewById(R.id.ringtoneCurrentValue)
-    dndChannelRow = findViewById(R.id.dndChannelRow)
   }
 
   // targetSdk 35 强制 edge-to-edge 时，状态栏会覆盖内容；用 WindowInsets 显式吸收 systemBars
@@ -901,67 +887,6 @@ class MainActivity : Activity() {
     requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), REQUEST_NOTIFICATIONS)
   }
 
-  private fun requestDndAccessIfNeeded() {
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-      DebugLogStore.append(applicationContext, "permission", "DND policy access not required on this Android version")
-      return
-    }
-
-    val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
-    if (notificationManager == null) {
-      DebugLogStore.append(applicationContext, "permission", "NotificationManager unavailable; skip DND prompt")
-      return
-    }
-
-    if (notificationManager.isNotificationPolicyAccessGranted) {
-      DebugLogStore.append(applicationContext, "permission", "DND policy access already granted")
-      return
-    }
-
-    val prefs = getSharedPreferences("ai_dca_notify_state", Context.MODE_PRIVATE)
-    val promptedKey = "dnd_bypass_prompted_v1"
-    if (prefs.getBoolean(promptedKey, false)) {
-      DebugLogStore.append(applicationContext, "permission", "DND prompt already shown previously; not reprompting")
-      return
-    }
-
-    DebugLogStore.append(applicationContext, "permission", "Prompting user to grant DND policy access")
-
-    AlertDialog.Builder(this)
-      .setTitle(R.string.dnd_bypass_title)
-      .setMessage(R.string.dnd_bypass_message)
-      .setNegativeButton(R.string.dnd_bypass_skip) { _, _ ->
-        prefs.edit().putBoolean(promptedKey, true).apply()
-        DebugLogStore.append(applicationContext, "permission", "DND prompt skipped by user")
-      }
-      .setPositiveButton(R.string.dnd_bypass_open_settings) { _, _ ->
-        prefs.edit().putBoolean(promptedKey, true).apply()
-        openDndPolicyAccessSettings()
-      }
-      .setCancelable(false)
-      .show()
-  }
-
-  private fun openDndPolicyAccessSettings() {
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-      Toast.makeText(this, R.string.dnd_bypass_unsupported, Toast.LENGTH_SHORT).show()
-      return
-    }
-
-    val intent = Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS).apply {
-      addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    }
-
-    try {
-      startActivity(intent)
-      DebugLogStore.append(applicationContext, "permission", "Launched DND policy access settings")
-    } catch (error: Exception) {
-      val message = error.message.orEmpty()
-      Toast.makeText(this, getString(R.string.dnd_bypass_route_failed, message), Toast.LENGTH_LONG).show()
-      DebugLogStore.append(applicationContext, "permission", "Failed to open DND policy access settings: ${'$'}message")
-    }
-  }
-
   private fun setupDeviceAdvancedToggle() {
     fun applyState(expanded: Boolean) {
       deviceAdvancedContainer.visibility = if (expanded) View.VISIBLE else View.GONE
@@ -1016,14 +941,12 @@ class MainActivity : Activity() {
     // 默认关闭：需要设备已注册（拿到 deviceInstallationId 与 FCM token）才能启用。
     val realtimeEnabled = prefs.getBoolean("realtime_channel_enabled", false)
     realtimeChannelSwitch.isChecked = realtimeEnabled
-    // 保活引导（电池优化白名单 + 自启动）是为实时通道服务
-    // 服务的，实时通道关闭时隐藏，避免看起来像独立功能。
-    applyRealtimeDependentVisibility(realtimeEnabled)
     realtimeChannelSwitch.setOnCheckedChangeListener { _, isChecked ->
       prefs.edit().putBoolean("realtime_channel_enabled", isChecked).apply()
-      applyRealtimeDependentVisibility(isChecked)
       if (isChecked) {
         startRealtimeChannelIfPossible(showToast = true)
+        // 实时通道依赖电池优化白名单 + 自启动才能稳定，开启后弹出引导弹窗。
+        showKeepaliveGuideDialog()
       } else {
         RealtimeChannelService.stop(this)
         Toast.makeText(this, R.string.settings_realtime_channel_stopped, Toast.LENGTH_SHORT).show()
@@ -1031,51 +954,6 @@ class MainActivity : Activity() {
     }
     realtimeChannelRow.setOnClickListener {
       realtimeChannelSwitch.toggle()
-    }
-
-    // 后台保活引导：电池优化白名单 + 厂商自启动入口。
-    refreshKeepaliveStatus()
-    keepaliveBatteryRow.setOnClickListener {
-      if (KeepaliveHelper.isOnBatteryWhitelist(this)) {
-        Toast.makeText(this, R.string.settings_keepalive_battery_done, Toast.LENGTH_SHORT).show()
-      } else {
-        KeepaliveHelper.requestBatteryWhitelist(this)
-      }
-    }
-    keepaliveAutostartRow.setOnClickListener {
-      val ok = KeepaliveHelper.openAutostartSettings(this)
-      if (!ok) {
-        KeepaliveHelper.openAppDetailsSettings(this)
-        Toast.makeText(this, R.string.settings_keepalive_unsupported, Toast.LENGTH_SHORT).show()
-      }
-    }
-    dndChannelRow.setOnClickListener {
-      // 先确保 critical channel 已创建，避免跳转后系统页找不到。
-      val channelId = NotifyMessagingService.ensureChannel(this, "critical", "", false)
-      val opened = runCatching {
-        if (Build.VERSION.SDK_INT >= 26) {
-          val intent = Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
-            .putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
-            .putExtra(Settings.EXTRA_CHANNEL_ID, channelId)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-          startActivity(intent)
-          true
-        } else {
-          false
-        }
-      }.getOrDefault(false)
-      if (!opened) {
-        val fallback = runCatching {
-          val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-            .putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-          startActivity(intent)
-          true
-        }.getOrDefault(false)
-        if (!fallback) {
-          Toast.makeText(this, R.string.settings_dnd_channel_open_failed, Toast.LENGTH_LONG).show()
-        }
-      }
     }
 
     // 加密密钥
@@ -1361,21 +1239,42 @@ class MainActivity : Activity() {
       }
   }
 
-  // 实时通道实验开关关闭时，连同上方分隔线一起隐藏 “电池优化白名单”与 “自启动 / 后台运行”
-  // 两行，表明它们是为实时通道服务的保活引导，不是独立功能。
-  private fun applyRealtimeDependentVisibility(enabled: Boolean) {
-    val v = if (enabled) View.VISIBLE else View.GONE
-    if (::keepaliveDivider.isInitialized) keepaliveDivider.visibility = v
-    if (::keepaliveBatteryRow.isInitialized) keepaliveBatteryRow.visibility = v
-    if (::keepaliveAutostartRow.isInitialized) keepaliveAutostartRow.visibility = v
-  }
-
-  private fun refreshKeepaliveStatus() {
-    keepaliveBatteryStatus.text = if (KeepaliveHelper.isOnBatteryWhitelist(this)) {
-      getString(R.string.settings_keepalive_battery_done)
-    } else {
-      getString(R.string.settings_keepalive_open)
+  // 实时通道开启后弹出引导对话框：电池优化白名单 + 厂商自启动入口。
+  // 两者都是 WebSocket 长连接稳定的前提；点击项后跳转设置、对话框不会闭，
+  // 方便处理完一项再处理下一项，最后点 “完成” 关闭。
+  private fun showKeepaliveGuideDialog() {
+    val view = LayoutInflater.from(this).inflate(R.layout.dialog_keepalive_guide, null)
+    val batteryRow = view.findViewById<LinearLayout>(R.id.dialogKeepaliveBatteryRow)
+    val batteryStatus = view.findViewById<TextView>(R.id.dialogKeepaliveBatteryStatus)
+    val autostartRow = view.findViewById<LinearLayout>(R.id.dialogKeepaliveAutostartRow)
+    fun refreshBatteryStatus() {
+      batteryStatus.text = if (KeepaliveHelper.isOnBatteryWhitelist(this)) {
+        getString(R.string.settings_keepalive_battery_done)
+      } else {
+        getString(R.string.settings_keepalive_open)
+      }
     }
+    refreshBatteryStatus()
+    batteryRow.setOnClickListener {
+      if (KeepaliveHelper.isOnBatteryWhitelist(this)) {
+        Toast.makeText(this, R.string.settings_keepalive_battery_done, Toast.LENGTH_SHORT).show()
+      } else {
+        KeepaliveHelper.requestBatteryWhitelist(this)
+      }
+      refreshBatteryStatus()
+    }
+    autostartRow.setOnClickListener {
+      val ok = KeepaliveHelper.openAutostartSettings(this)
+      if (!ok) {
+        KeepaliveHelper.openAppDetailsSettings(this)
+        Toast.makeText(this, R.string.settings_keepalive_unsupported, Toast.LENGTH_SHORT).show()
+      }
+    }
+    AlertDialog.Builder(this)
+      .setTitle(R.string.dialog_keepalive_guide_title)
+      .setView(view)
+      .setPositiveButton(R.string.dialog_keepalive_guide_close, null)
+      .show()
   }
 
   companion object {

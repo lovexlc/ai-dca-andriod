@@ -51,12 +51,6 @@
   <string name="message_deleted">已删除该条消息</string>
   <string name="action_cancel">取消</string>
   <string name="action_confirm">确认</string>
-  <string name="dnd_bypass_title">允许在勿扰模式下仍然响铃？</string>
-  <string name="dnd_bypass_message">交易提醒在勿扰 / 静音模式下默认不会响铃。请将「基金通知」加入勿扰例外，重要提醒才能穿透。</string>
-  <string name="dnd_bypass_open_settings">去设置</string>
-  <string name="dnd_bypass_skip">以后再说</string>
-  <string name="dnd_bypass_unsupported">当前系统不支持勿扰旁路设置</string>
-  <string name="dnd_bypass_route_failed">无法打开勿扰权限设置页：%1$s</string>
   <!-- 推送 URL 测试预览卡 (服务器 tab) -->
   <string name="bark_action_copy">复制</string>
   <string name="bark_action_send">发送</string>
@@ -121,6 +115,9 @@
   <string name="settings_keepalive_autostart_subtitle">跳转到厂商设置，允许后台运行与自启动</string>
   <string name="settings_keepalive_open">去设置</string>
   <string name="settings_keepalive_unsupported">本机未实现专用入口，已打开应用详情</string>
+  <string name="dialog_keepalive_guide_title">建议为实时通道开启保活</string>
+  <string name="dialog_keepalive_guide_message">实时通道（实验）依赖 WebSocket 长连接，需要把应用加入电池优化白名单并允许自启动 / 后台运行，系统才不会在锁屏后回收它。可以逐项点击跳转设置，处理完后点 “完成” 关闭本弹窗。</string>
+  <string name="dialog_keepalive_guide_close">完成</string>
   <string name="call_ring_channel_name">持续响铃</string>
   <string name="call_ring_channel_desc">Bark call=1 持续响铃的前台服务提示</string>
   <string name="call_ring_default_title">推送响铃中</string>
@@ -129,10 +126,6 @@
   <string name="sound_library_dialog_title">内置铃声</string>
   <string name="sound_library_preview_toast">试听：%1$s</string>
   <string name="sound_library_copy_toast">已复制：sound=%1$s</string>
-  <string name="settings_dnd_channel_label">勿扰穿透</string>
-  <string name="settings_dnd_channel_subtitle">为 critical 通道打开“叿越勿扰”，确保 level=critical 可响</string>
-  <string name="settings_dnd_channel_action">去设置</string>
-  <string name="settings_dnd_channel_open_failed">未能打开系统设置，请手动到 设置 · 通知 中调整</string>
   <string name="bark_self_test_button">一键自测</string>
   <string name="bark_self_test_toast">已发送本地自测通知，请看状态栏</string>
   <string name="message_long_press_title">消息操作</string>
