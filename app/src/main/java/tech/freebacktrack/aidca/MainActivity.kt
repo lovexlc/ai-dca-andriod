@@ -727,7 +727,10 @@ class MainActivity : Activity() {
         expandChevron.rotation = if (expanded) 90f else 0f
       }
 
-      titleView.text = record.title.ifBlank { getString(R.string.incoming_message_fallback_title) }
+      // 标题也走 markdown 渲染（无标记时与纯文字一致，有 **bold** 时能加粗重点数字）。
+      titleView.text = MarkdownRenderer.render(
+        record.title.ifBlank { getString(R.string.incoming_message_fallback_title) }
+      )
       metaView.text = buildString {
         append(record.receivedAt.ifBlank { "--" })
         if (record.strategyName.isNotBlank()) {
@@ -754,25 +757,12 @@ class MainActivity : Activity() {
           append("购买金额: ")
           append(record.purchaseAmount)
         }
-        if (record.messageId.isNotBlank()) {
+        // FCM Message ID / “通知栏已展示” / “更详细的策略说明” 均为低价值信息，
+        // 为减少展开面板的视觉噪点，隐藏。需要调试 ID 可长按卡片选 “复制原始 JSON”。
+        if (record.notificationStatus == "display-error") {
           if (isNotEmpty()) append('\n')
-          append("FCM Message ID: ")
-          append(record.messageId)
-        }
-        when (record.notificationStatus) {
-          "display-error" -> {
-            if (isNotEmpty()) append('\n')
-            append("通知展示失败: ")
-            append(record.notificationError.ifBlank { "未知错误" })
-          }
-          "displayed" -> {
-            if (isNotEmpty()) append('\n')
-            append("通知栏已展示。")
-          }
-        }
-        if (record.detailUrl.isNotBlank()) {
-          if (isNotEmpty()) append('\n')
-          append("更详细的策略说明请到网站查看。")
+          append("通知展示失败: ")
+          append(record.notificationError.ifBlank { "未知错误" })
         }
       }
 
