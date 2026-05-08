@@ -90,6 +90,7 @@ class MainActivity : Activity() {
   private lateinit var keepaliveBatteryRow: LinearLayout
   private lateinit var keepaliveBatteryStatus: TextView
   private lateinit var keepaliveAutostartRow: LinearLayout
+  private lateinit var keepaliveDivider: View
   private lateinit var encryptionKeyRow: LinearLayout
   private lateinit var encryptionKeyStatus: TextView
   private lateinit var ringtoneRow: LinearLayout
@@ -208,6 +209,7 @@ class MainActivity : Activity() {
     keepaliveBatteryRow = findViewById(R.id.keepaliveBatteryRow)
     keepaliveBatteryStatus = findViewById(R.id.keepaliveBatteryStatus)
     keepaliveAutostartRow = findViewById(R.id.keepaliveAutostartRow)
+    keepaliveDivider = findViewById(R.id.keepaliveDivider)
     encryptionKeyRow = findViewById(R.id.encryptionKeyRow)
     encryptionKeyStatus = findViewById(R.id.encryptionKeyStatus)
     ringtoneRow = findViewById(R.id.ringtoneRow)
@@ -1014,8 +1016,12 @@ class MainActivity : Activity() {
     // 默认关闭：需要设备已注册（拿到 deviceInstallationId 与 FCM token）才能启用。
     val realtimeEnabled = prefs.getBoolean("realtime_channel_enabled", false)
     realtimeChannelSwitch.isChecked = realtimeEnabled
+    // 保活引导（电池优化白名单 + 自启动）是为实时通道服务
+    // 服务的，实时通道关闭时隐藏，避免看起来像独立功能。
+    applyRealtimeDependentVisibility(realtimeEnabled)
     realtimeChannelSwitch.setOnCheckedChangeListener { _, isChecked ->
       prefs.edit().putBoolean("realtime_channel_enabled", isChecked).apply()
+      applyRealtimeDependentVisibility(isChecked)
       if (isChecked) {
         startRealtimeChannelIfPossible(showToast = true)
       } else {
@@ -1353,6 +1359,15 @@ class MainActivity : Activity() {
           Toast.makeText(this, R.string.settings_realtime_channel_need_pair, Toast.LENGTH_SHORT).show()
         }
       }
+  }
+
+  // 实时通道实验开关关闭时，连同上方分隔线一起隐藏 “电池优化白名单”与 “自启动 / 后台运行”
+  // 两行，表明它们是为实时通道服务的保活引导，不是独立功能。
+  private fun applyRealtimeDependentVisibility(enabled: Boolean) {
+    val v = if (enabled) View.VISIBLE else View.GONE
+    if (::keepaliveDivider.isInitialized) keepaliveDivider.visibility = v
+    if (::keepaliveBatteryRow.isInitialized) keepaliveBatteryRow.visibility = v
+    if (::keepaliveAutostartRow.isInitialized) keepaliveAutostartRow.visibility = v
   }
 
   private fun refreshKeepaliveStatus() {
