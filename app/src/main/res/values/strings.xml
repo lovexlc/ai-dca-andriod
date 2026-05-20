@@ -10,6 +10,12 @@
   <string name="device_installation_id_label">设备唯一 ID</string>
   <string name="action_copy_device_id">复制</string>
   <string name="device_installation_id_copied">设备 ID 已复制</string>
+  <string name="action_reset_device_id">重置</string>
+  <string name="device_installation_id_reset_confirm_title">重置设备唯一 ID？</string>
+  <string name="device_installation_id_reset_confirm_message">会生成一个新的唯一 ID，浏览器绑定、历史推送规则都会自动续到新 ID。</string>
+  <string name="device_installation_id_reset_in_progress">正在重置…</string>
+  <string name="device_installation_id_reset_success">已重置设备 ID</string>
+  <string name="device_installation_id_reset_failed_prefix">重置失败：%1$s</string>
   <string name="message_history_empty">还没有收到推送记录。</string>
   <string name="message_action_open_detail">查看详情</string>
   <string name="status_idle">等待</string>

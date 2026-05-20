@@ -24,6 +24,25 @@ object DeviceInstallationStore {
     return generated
   }
 
+  /**
+   * Always returns a freshly generated `android-<uuid>` id. Used by the manual reset flow
+   * where the user explicitly wants a brand-new identifier instead of the ANDROID_ID动态推导。
+   */
+  fun generateRandomId(): String = "android-${UUID.randomUUID()}"
+
+  /**
+   * Overwrites the stored deviceInstallationId with the given value. Trims and falls back
+   * to a freshly generated id when the input is blank, so callers can never end up with
+   * an empty identifier.
+   */
+  fun replace(context: Context, newId: String): String {
+    val appContext = context.applicationContext
+    val preferences = appContext.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
+    val sanitized = newId.trim().ifBlank { generateRandomId() }
+    preferences.edit().putString(DEVICE_INSTALLATION_ID_KEY, sanitized).apply()
+    return sanitized
+  }
+
   private fun resolveStableDeviceId(context: Context): String? {
     // On Android 8+, ANDROID_ID stays stable across reinstall for the same device, user, and signing key.
     val androidId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)

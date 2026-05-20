@@ -96,6 +96,58 @@ object RegistrationRepository {
     }
   }
 
+  /**
+   * Rotates this device's `deviceInstallationId`. Locally generates a fresh id, calls the worker to
+   * rename the KV registration record (preserving token / pairedClients / pairing code), then
+   * persists the new id and re-runs a heartbeat so the worker sees an up-to-date `updatedAt`.
+   *
+   * On any failure the local id is left untouched and the callback receives the previous snapshot.
+   */
+  fun resetDeviceInstallationId(
+    context: Context,
+    callback: (Boolean, String, RegistrationSnapshot) -> Unit
+  ) {
+    val appContext = context.applicationContext
+    DebugLogStore.append(appContext, "register", "Reset deviceInstallationId requested")
+    executor.execute {
+      val previousIdentity = currentIdentity(appContext)
+      val previousSnapshot = RegistrationStateStore.read(appContext, previousIdentity)
+      val oldId = previousIdentity.deviceInstallationId
+      try {
+        if (oldId.isBlank()) {
+          throw IllegalStateException("当前设备还没有 deviceInstallationId。")
+        }
+        val token = fetchTokenBlocking(appContext)
+        if (token.isBlank()) {
+          throw IllegalStateException("尚未获取到 FCM token，请稍后重试。")
+        }
+        val newId = DeviceInstallationStore.generateRandomId()
+        val payload = JSONObject()
+          .put("oldDeviceInstallationId", oldId)
+          .put("newDeviceInstallationId", newId)
+          .put("token", token)
+        DebugLogStore.append(
+          appContext,
+          "register",
+          "Calling /gcm/reset-device-id oldId=$oldId newId=$newId"
+        )
+        postJson("${BuildConfig.NOTIFY_BASE_URL}/gcm/reset-device-id", payload)
+        DebugLogStore.append(appContext, "register", "Worker rebind ok, persisting new local id")
+        DeviceInstallationStore.replace(appContext, newId)
+        val nextSnapshot = safeRegisterCurrentToken(appContext, token, "reset-device-id")
+        mainHandler.post { callback(true, "", nextSnapshot) }
+      } catch (error: Exception) {
+        DebugLogStore.append(
+          appContext,
+          "register",
+          "Reset deviceInstallationId failed: ${error.message ?: "未知错误"}"
+        )
+        val message = error.message ?: "重置失败"
+        mainHandler.post { callback(false, message, previousSnapshot) }
+      }
+    }
+  }
+
   private fun safeRegisterCurrentToken(
     context: Context,
     explicitToken: String?,

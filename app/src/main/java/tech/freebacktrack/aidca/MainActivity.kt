@@ -228,10 +228,30 @@ class MainActivity : Activity() {
 
   private fun setupDeviceIdentityActions() {
     copyDeviceInstallationIdButton.setOnClickListener {
-      val deviceInstallationId = DeviceInstallationStore.getOrCreate(applicationContext)
-      val clipboardManager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-      clipboardManager.setPrimaryClip(ClipData.newPlainText("基金通知 设备 ID", deviceInstallationId))
-      Toast.makeText(this, R.string.device_installation_id_copied, Toast.LENGTH_SHORT).show()
+      AlertDialog.Builder(this)
+        .setTitle(R.string.device_installation_id_reset_confirm_title)
+        .setMessage(R.string.device_installation_id_reset_confirm_message)
+        .setNegativeButton(R.string.action_cancel, null)
+        .setPositiveButton(R.string.action_confirm) { _, _ -> performDeviceInstallationIdReset() }
+        .show()
+    }
+  }
+
+  private fun performDeviceInstallationIdReset() {
+    copyDeviceInstallationIdButton.isEnabled = false
+    Toast.makeText(this, R.string.device_installation_id_reset_in_progress, Toast.LENGTH_SHORT).show()
+    RegistrationRepository.resetDeviceInstallationId(this) { success, message, snapshot ->
+      copyDeviceInstallationIdButton.isEnabled = true
+      renderSnapshot(snapshot)
+      if (success) {
+        Toast.makeText(this, R.string.device_installation_id_reset_success, Toast.LENGTH_SHORT).show()
+      } else {
+        Toast.makeText(
+          this,
+          getString(R.string.device_installation_id_reset_failed_prefix, message.ifBlank { "未知错误" }),
+          Toast.LENGTH_LONG
+        ).show()
+      }
     }
   }
 
