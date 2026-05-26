@@ -117,6 +117,16 @@ object NotificationMessageStore {
     return incoming
   }
 
+  fun contains(context: Context, eventId: String, messageId: String): Boolean {
+    val targetEventId = eventId.trim()
+    val targetMessageId = messageId.trim()
+    if (targetEventId.isBlank() && targetMessageId.isBlank()) return false
+    return readAll(context).any { record ->
+      (targetEventId.isNotBlank() && record.eventId == targetEventId)
+        || (targetMessageId.isNotBlank() && record.messageId == targetMessageId)
+    }
+  }
+
   fun markDisplayed(context: Context, eventId: String, messageId: String) {
     updateStatus(context, eventId, messageId, "displayed", "")
   }

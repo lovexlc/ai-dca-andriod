@@ -29,7 +29,9 @@ class NotifyMessagingService : FirebaseMessagingService() {
       context = applicationContext,
       rawData = message.data,
       source = "fcm",
-      messageId = message.messageId.orEmpty(),
+      messageId = message.data["messageId"].orEmpty()
+        .ifBlank { message.data["eventId"].orEmpty() }
+        .ifBlank { message.messageId.orEmpty() },
       fallbackTitle = message.notification?.title,
       fallbackBody = message.notification?.body,
     )

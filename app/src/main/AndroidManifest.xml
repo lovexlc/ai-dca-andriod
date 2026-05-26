@@ -47,6 +47,10 @@
       </intent-filter>
     </activity>
 
+    <receiver
+      android:name=".NotifyTapReceiver"
+      android:exported="false" />
+
     <service
       android:name=".NotifyMessagingService"
       android:exported="false">

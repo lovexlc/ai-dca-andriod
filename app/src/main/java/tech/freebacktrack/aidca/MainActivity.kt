@@ -118,6 +118,7 @@ class MainActivity : Activity() {
       startRealtimeChannelIfPossible(showToast = false)
     }
     DebugLogStore.append(applicationContext, "ui", "MainActivity onCreate")
+    reportOpenedAck(intent)
 
     val identity = RegistrationRepository.currentIdentity(this)
     renderSnapshot(RegistrationStateStore.read(this, identity))
@@ -126,6 +127,13 @@ class MainActivity : Activity() {
     requestNotificationPermissionIfNeeded()
 
     startRegistration("app-launch")
+  }
+
+  override fun onNewIntent(intent: Intent) {
+    super.onNewIntent(intent)
+    setIntent(intent)
+    reportOpenedAck(intent)
+    renderMessageHistory()
   }
 
   override fun onRequestPermissionsResult(
@@ -647,6 +655,15 @@ class MainActivity : Activity() {
     deviceInstallationIdTextView.text = snapshot.deviceInstallationId.ifBlank { DeviceInstallationStore.getOrCreate(applicationContext) }
     tokenTextView.text = if (snapshot.tokenMasked.isBlank()) "FCM token 尚未可用" else "Token: ${snapshot.tokenMasked}"
     renderBarkPreviewCards(snapshot.deviceInstallationId.ifBlank { DeviceInstallationStore.getOrCreate(applicationContext) })
+  }
+
+  private fun reportOpenedAck(sourceIntent: Intent?) {
+    if (sourceIntent?.getBooleanExtra(EXTRA_OPENED_ACK_REPORTED, false) == true) return
+    val eventId = sourceIntent?.getStringExtra(EXTRA_EVENT_ID).orEmpty()
+    val messageId = sourceIntent?.getStringExtra(EXTRA_MESSAGE_ID).orEmpty()
+    if (eventId.isBlank() && messageId.isBlank()) return
+    DeliveryAckReporter.report(this, "local", "opened", eventId, messageId)
+    DebugLogStore.append(applicationContext, "ack", "opened ack requested messageId=${messageId.ifBlank { eventId }}")
   }
 
   private fun renderMessageHistory() {
@@ -1300,6 +1317,7 @@ class MainActivity : Activity() {
   companion object {
     const val EXTRA_EVENT_ID = "extra_event_id"
     const val EXTRA_MESSAGE_ID = "extra_message_id"
+    const val EXTRA_OPENED_ACK_REPORTED = "extra_opened_ack_reported"
     private const val REQUEST_NOTIFICATIONS = 1001
     private const val DEBUG_TAP_TARGET = 7
     private const val DEBUG_TAP_WINDOW_MS = 1800L

@@ -183,15 +183,22 @@ class RealtimeChannelService : Service() {
           val k = keys.next()
           map[k] = data.optString(k, "")
         }
+        val frameMessageId = frame.optString("messageId").ifBlank { frame.optString("eventId") }
         val messageId = data.optString("messageId")
           .ifBlank { data.optString("eventId") }
+          .ifBlank { frameMessageId }
           .ifBlank { System.currentTimeMillis().toString() }
-        BarkPayloadHandler.handle(
+        val eventId = data.optString("eventId").ifBlank { frame.optString("eventId") }.ifBlank { messageId }
+        if (!map.containsKey("messageId")) map["messageId"] = messageId
+        if (!map.containsKey("eventId")) map["eventId"] = eventId
+        sendAck("received", eventId, messageId)
+        val result = BarkPayloadHandler.handle(
           context = applicationContext,
           rawData = map,
           source = "ws",
           messageId = messageId,
         )
+        sendAck(if (result == "deduped") "deduped" else "displayed", eventId, messageId)
       }
       "hello" -> {
         DebugLogStore.append(applicationContext, "ws", "hello connectionId=${frame.optString("connectionId")}")
@@ -203,6 +210,24 @@ class RealtimeChannelService : Service() {
       else -> {
         DebugLogStore.append(applicationContext, "ws", "unknown frame type=$type")
       }
+    }
+  }
+
+  private fun sendAck(stage: String, eventId: String, messageId: String, detail: String = "") {
+    val payload = JSONObject()
+      .put("type", "ack")
+      .put("stage", stage)
+      .put("source", "ws")
+      .put("deviceInstallationId", deviceInstallationId)
+      .put("eventId", eventId.ifBlank { messageId })
+      .put("messageId", messageId.ifBlank { eventId })
+      .put("ts", System.currentTimeMillis())
+    if (detail.isNotBlank()) payload.put("detail", detail)
+    try {
+      webSocket?.send(payload.toString())
+      DebugLogStore.append(applicationContext, "ws", "ack sent stage=$stage messageId=${messageId.ifBlank { "-" }}")
+    } catch (error: Exception) {
+      DebugLogStore.append(applicationContext, "ws", "ack send failed stage=$stage err=${error.message ?: "-"}")
     }
   }
 

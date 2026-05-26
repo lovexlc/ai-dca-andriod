@@ -8,7 +8,6 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.net.Uri
 import android.util.Base64
 import java.net.HttpURLConnection
 import java.net.URL
@@ -71,12 +70,21 @@ object BarkPayloadHandler {
     }
 
     val eventId = data["eventId"].orEmpty()
+    val effectiveMessageId = messageId.ifBlank { data["messageId"].orEmpty() }.ifBlank { eventId }
     val eventType = data["eventType"].orEmpty()
     val symbol = data["symbol"].orEmpty()
     val strategyName = data["strategyName"].orEmpty()
     val triggerCondition = data["triggerCondition"].orEmpty()
     val purchaseAmount = data["purchaseAmount"].orEmpty()
     val detailUrl = data["detailUrl"].orEmpty()
+
+    DeliveryAckReporter.report(ctx, source, "received", eventId, effectiveMessageId)
+
+    if (NotificationMessageStore.contains(ctx, eventId, effectiveMessageId)) {
+      DeliveryAckReporter.report(ctx, source, "deduped", eventId, effectiveMessageId, "duplicate local message")
+      DebugLogStore.append(ctx, "notify", "Duplicate message skipped id=${effectiveMessageId.ifBlank { "-" }} source=$source")
+      return "deduped"
+    }
 
     val channelId = NotifyMessagingService.ensureChannel(ctx, level, soundName, callMode)
 
@@ -87,7 +95,7 @@ object BarkPayloadHandler {
     DebugLogStore.append(
       ctx,
       source,
-      "onMessageReceived id=${messageId.ifBlank { "-" }} title=${title.take(48)} " +
+      "onMessageReceived id=${effectiveMessageId.ifBlank { "-" }} title=${title.take(48)} " +
         "level=${level.ifBlank { "-" }} sound=${soundName.ifBlank { "-" }} call=$callMode " +
         "archive=$isArchive group=${group.ifBlank { "-" }} dataKeys=${rawData.keys.joinToString(",")}"
     )
@@ -96,7 +104,7 @@ object BarkPayloadHandler {
       NotificationMessageStore.upsertReceived(
         context = ctx,
         eventId = eventId,
-        messageId = messageId,
+        messageId = effectiveMessageId,
         eventType = eventType,
         title = title,
         body = body,
@@ -108,13 +116,13 @@ object BarkPayloadHandler {
         strategyName = strategyName
       )
     }
-    DeliveryReceiptStore.writeReceived(ctx, title, expandedBody, messageId)
+    DeliveryReceiptStore.writeReceived(ctx, title, expandedBody, effectiveMessageId)
 
     if (autoCopy && copyText.isNotBlank()) {
       copyToClipboard(ctx, copyText)
     }
 
-    val pendingIntent = buildTapIntent(ctx, urlAction, eventId, messageId)
+    val pendingIntent = buildTapIntent(ctx, urlAction, eventId, effectiveMessageId, source)
     val largeIcon = if (iconUrl.isNotBlank()) tryDownloadBitmap(iconUrl) else null
 
     val builder = android.app.Notification.Builder(ctx, channelId)
@@ -140,12 +148,13 @@ object BarkPayloadHandler {
 
     try {
       val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-      nm.notify(notificationId(eventId, messageId), notification)
-      if (isArchive) NotificationMessageStore.markDisplayed(ctx, eventId, messageId)
+      nm.notify(notificationId(eventId, effectiveMessageId), notification)
+      if (isArchive) NotificationMessageStore.markDisplayed(ctx, eventId, effectiveMessageId)
+      DeliveryAckReporter.report(ctx, source, "displayed", eventId, effectiveMessageId)
       if (callMode) {
         try {
           CallRingService.start(ctx, title, expandedBody)
-          DebugLogStore.append(ctx, "call", "call=1 ring service started for ${messageId.ifBlank { "-" }}")
+          DebugLogStore.append(ctx, "call", "call=1 ring service started for ${effectiveMessageId.ifBlank { "-" }}")
         } catch (e: Exception) {
           DebugLogStore.append(ctx, "call", "call=1 ring service failed: ${e.message ?: "未知错误"}")
         }
@@ -153,56 +162,54 @@ object BarkPayloadHandler {
       DebugLogStore.append(
         ctx,
         "notify",
-        "Notification displayed for message ${messageId.ifBlank { "-" }} channel=$channelId source=$source"
+        "Notification displayed for message ${effectiveMessageId.ifBlank { "-" }} channel=$channelId source=$source"
       )
     } catch (error: Exception) {
       if (isArchive) {
         NotificationMessageStore.markDisplayError(
           ctx,
           eventId,
-          messageId,
+          effectiveMessageId,
           error.message ?: "未知错误"
         )
       }
       DebugLogStore.append(
         ctx,
         "notify",
-        "Notification display failed for message ${messageId.ifBlank { "-" }}: ${error.message ?: "未知错误"}"
+        "Notification display failed for message ${effectiveMessageId.ifBlank { "-" }}: ${error.message ?: "未知错误"}"
       )
       DeliveryReceiptStore.writeDisplayError(
         ctx,
         title,
         body,
-        messageId,
+        effectiveMessageId,
         error.message ?: "未知错误"
       )
+      DeliveryAckReporter.report(ctx, source, "failed", eventId, effectiveMessageId, error.message ?: "未知错误")
     }
 
     return channelId
   }
 
-  private fun buildTapIntent(ctx: Context, urlAction: String, eventId: String, messageId: String): PendingIntent {
+  private fun buildTapIntent(
+    ctx: Context,
+    urlAction: String,
+    eventId: String,
+    messageId: String,
+    source: String
+  ): PendingIntent {
     val safeUrl = urlAction.trim()
-    if (safeUrl.isNotBlank() && (safeUrl.startsWith("http://") || safeUrl.startsWith("https://"))) {
-      val viewIntent = Intent(Intent.ACTION_VIEW, Uri.parse(safeUrl)).apply {
-        flags = Intent.FLAG_ACTIVITY_NEW_TASK
-      }
-      return PendingIntent.getActivity(
-        ctx,
-        safeUrl.hashCode(),
-        viewIntent,
-        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-      )
+    val tapIntent = Intent(ctx, NotifyTapReceiver::class.java).apply {
+      action = NotifyTapReceiver.ACTION_OPEN_NOTIFICATION
+      putExtra(NotifyTapReceiver.EXTRA_EVENT_ID, eventId)
+      putExtra(NotifyTapReceiver.EXTRA_MESSAGE_ID, messageId)
+      putExtra(NotifyTapReceiver.EXTRA_SOURCE, source)
+      if (safeUrl.isNotBlank()) putExtra(NotifyTapReceiver.EXTRA_URL, safeUrl)
     }
-    val launchIntent = Intent(ctx, MainActivity::class.java).apply {
-      putExtra(MainActivity.EXTRA_EVENT_ID, eventId)
-      putExtra(MainActivity.EXTRA_MESSAGE_ID, messageId)
-      flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-    }
-    return PendingIntent.getActivity(
+    return PendingIntent.getBroadcast(
       ctx,
-      1,
-      launchIntent,
+      notificationId(eventId, messageId),
+      tapIntent,
       PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
   }
